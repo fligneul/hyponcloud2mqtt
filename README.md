@@ -17,7 +17,7 @@ A bridge to connect the Hypon Cloud API to an MQTT broker. This application peri
 
 ## Prerequisites
 
-*   Python 3.12 or later.
+*   Python 3.9 or later.
 *   A Hypon Cloud account.
 *   An MQTT broker.
 *   Docker (optional, for containerized deployment).
@@ -119,4 +119,4 @@ This is the recommended way to run the application as a long-running service.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
