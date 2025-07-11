@@ -4,8 +4,8 @@ hypon:
   user: "YOUR_USER"
   # Your Hypon Cloud password
   password: "YOUR_PASSWORD"
-  # Base URL for the Hypon Cloud API (e.g., "https://api.hypon.com")
-  api_base_url: "API_BASE_URL"
+  # Base URL for the Hypon Cloud API
+  api_base_url: "https://api.hypon.cloud/v2"
   # List of system IDs to fetch data for (e.g., ["YOUR_SYSTEM_ID_1", "YOUR_SYSTEM_ID_2"])
   system_ids:
     - "YOUR_SYSTEM_ID"

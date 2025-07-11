@@ -54,25 +54,38 @@ Then, edit `config.yaml`:
 
 ```yaml
 hypon:
-  user: "YOUR_HYPON_USERNAME"
-  password: "YOUR_HYPON_PASSWORD"
-  # The following URLs are the defaults and may not need to be changed.
-  login_url: "https://api.hypon.com/login"
-  data_url: "https://api.hypon.com/data"
+  # Your Hypon Cloud username
+  user: "YOUR_USER"
+  # Your Hypon Cloud password
+  password: "YOUR_PASSWORD"
+  # Base URL for the Hypon Cloud API
+  api_base_url: "https://api.hypon.cloud/v2"
+  # List of system IDs to fetch data for (e.g., ["YOUR_SYSTEM_ID_1", "YOUR_SYSTEM_ID_2"])
+  system_ids:
+    - "YOUR_SYSTEM_ID"
+  # Interval in seconds between data fetches from Hypon Cloud (default: 60)
+  interval: 60
 
+# MQTT broker configuration
 mqtt:
-  host: "your-mqtt-broker-host"
+  # MQTT broker hostname or IP address
+  host: "localhost"
+  # MQTT broker port (default: 1883)
   port: 1883
-  user: "your-mqtt-user"       # Optional
-  password: "your-mqtt-password" # Optional
+  # MQTT username (optional)
+  user: ""
+  # MQTT password (optional)
+  password: ""
+  # Base MQTT topic for publishing data (e.g., "hyponcloud2mqtt/status")
   topic: "hyponcloud2mqtt/status"
-  retain: false # Set to true to have messages retained by the broker
-  publish_mode: full # Options: 'full' (default) or 'individual'
-  dry_run: true # Set to true to prevent actual MQTT publishing (default: true)
-
-# MQTT Publish Modes:
-#   - 'full': Publishes the entire data object as a single JSON string to a topic like 'hyponcloud2mqtt/system_id/full_data'. (Default)
-#   - 'individual': Publishes each data attribute to a dedicated topic, e.g., 'hyponcloud2mqtt/system_id/power_pv'.
+  # Set to true to have messages retained by the broker (default: false)
+  retain: false
+  # Set to true to prevent actual MQTT publishing (for testing purposes, default: true)
+  dry_run: true
+  # MQTT Publish Modes:
+  #   - 'full': Publishes the entire data object as a single JSON string to a topic like 'hyponcloud2mqtt/system_id/full_data'. (Default)
+  #   - 'individual': Publishes each data attribute to a dedicated topic, e.g., 'hyponcloud2mqtt/system_id/power_pv'.
+  publish_mode: full
 ```
 
 ## Usage
