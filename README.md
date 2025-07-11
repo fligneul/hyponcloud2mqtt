@@ -5,6 +5,8 @@
 
 A bridge to connect the Hypon Cloud API to an MQTT broker. This application periodically fetches data from your Hypon system and publishes it to your MQTT broker, allowing for easy integration with home automation systems like Home Assistant.
 
+This project was developed and tested using data from an **HMS800-C** inverter. If you are using a different Hypon inverter model and find that some data points are missing or incorrectly mapped, please open an issue on the GitHub repository. Your feedback will help improve compatibility for other users.
+
 ## Features
 
 *   Fetches the latest data from the Hypon Cloud API.
@@ -129,6 +131,65 @@ This is the recommended way to run the application as a long-running service.
     *   `-d`: Runs the container in detached mode.
     *   `--restart unless-stopped`: Ensures the container restarts automatically if it crashes.
     *   `-v $(pwd)/config.yaml:/app/config.yaml`: Mounts your local configuration file into the container.
+
+## MQTT Output Examples
+
+Assuming a `topic` of `hyponcloud2mqtt/status` and `system_id` of `123456` in your `config.yaml`:
+
+### Full Publish Mode (`publish_mode: full`)
+
+The entire data object will be published as a single JSON string to:
+`hyponcloud2mqtt/status/123456/full_data`
+
+Example Payload:
+
+```json
+{
+  "monetary": "USD",
+  "today_earning": 10.0,
+  "month_earning": 100.0,
+  "total_earning": 1000.0,
+  "e_total": 5000.0,
+  "e_month": 500.0,
+  "e_today": 50.0,
+  "e_year": 2000.0,
+  "total_tree": 5,
+  "total_co2": 10,
+  "total_diesel": 20,
+  "percent": 90.0,
+  "meter_power": 5.0,
+  "power_load": 2.0,
+  "w_cha": 1.0,
+  "power_pv": 3.0,
+  "soc": 0,
+  "micro": 1
+}
+```
+
+### Individual Publish Mode (`publish_mode: individual`)
+
+Each data attribute will be published to a dedicated topic.
+
+Examples:
+
+*   `hyponcloud2mqtt/status/123456/monetary`: `USD`
+*   `hyponcloud2mqtt/status/123456/today_earning`: `10.0`
+*   `hyponcloud2mqtt/status/123456/month_earning`: `100.0`
+*   `hyponcloud2mqtt/status/123456/total_earning`: `1000.0`
+*   `hyponcloud2mqtt/status/123456/e_total`: `5000.0`
+*   `hyponcloud2mqtt/status/123456/e_month`: `500.0`
+*   `hyponcloud2mqtt/status/123456/e_today`: `50.0`
+*   `hyponcloud2mqtt/status/123456/e_year`: `2000.0`
+*   `hyponcloud2mqtt/status/123456/total_tree`: `5`
+*   `hyponcloud2mqtt/status/123456/total_co2`: `10`
+*   `hyponcloud2mqtt/status/123456/total_diesel`: `20`
+*   `hyponcloud2mqtt/status/123456/percent`: `90.0`
+*   `hyponcloud2mqtt/status/123456/meter_power`: `5.0`
+*   `hyponcloud2mqtt/status/123456/power_load`: `2.0`
+*   `hyponcloud2mqtt/status/123456/w_cha`: `1.0`
+*   `hyponcloud2mqtt/status/123456/power_pv`: `3.0`
+*   `hyponcloud2mqtt/status/123456/soc`: `0`
+*   `hyponcloud2mqtt/status/123456/micro`: `1`
 
 ## License
 
