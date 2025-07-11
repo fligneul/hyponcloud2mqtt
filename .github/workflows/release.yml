@@ -1,0 +1,106 @@
+name: 🚚 Release hyponcloud2mqtt
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
+    runs-on: ubuntu-latest
+    concurrency: release
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: ⏰ Wait for builds to succeed
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: wait-for-check-regexp
+          check-regexp: build-.*
+
+      - name: 🛒 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+
+      - name: 👷🏻 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt # Changed from requirements-ci.txt
+          pip install semantic-release build twine # Install semantic-release and build tools
+
+      - name: 🕵🏻 Check if release is needed
+        run: |
+          # Extract current version from pyproject.toml
+          current="$(grep -oP '^version = "\\K[0-9.]+' pyproject.toml)"
+          echo "Current version: ${current}"
+
+          # Determine next version using semantic-release
+          next="$(python -m semantic_release version --print --no-commit)"
+          echo "Next version: ${next}"
+
+          if [ "$next" = "$current" ]; then
+            echo "release-needed=false" >> $GITHUB_ENV
+            echo "No release needed"
+          else
+            echo "release-needed=true" >> $GITHUB_ENV
+            echo "release-version=$next" >> $GITHUB_ENV
+            echo "New release needed"
+          fi
+
+      - name: 🖋️ Set release version
+        if: ${{ env.release-needed == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+        run: python -m semantic_release version
+
+      - name: 🛠️ Build dist
+        if: ${{ env.release-needed == 'true' }}
+        run: python -m build
+
+      - name: 🚀 Upload to PyPI
+        if: ${{ env.release-needed == 'true' }}
+        run: python -m twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
+
+      - name: 👾 Set up QEMU
+        if: ${{ env.release-needed == 'true' }}
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🐳 Set up Docker Buildx
+        if: ${{ env.release-needed == 'true' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
+
+      - name: 🪪 Login to Docker Hub
+        if: ${{ env.release-needed == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🚀 Build and push to Docker Hub
+        if: ${{ env.release-needed == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
+          push: true
+          tags: ${{ vars.DOCKER_HUB_USER }}/hyponcloud2mqtt:${{ env.release-version }},${{ vars.DOCKER_HUB_USER }}/hyponcloud2mqtt:latest
+
+      - name: 🔖 Publish Release
+        if: ${{ env.release-needed == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+        run: python -m semantic_release publish

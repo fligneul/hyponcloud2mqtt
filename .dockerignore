@@ -1,0 +1,5 @@
+.git
+.gitignore
+Dockerfile
+config.yaml
+config.yaml.dist

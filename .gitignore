@@ -1,0 +1,13 @@
+config.yaml
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environment
+venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
