@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import mock_open, patch
-from hyponcloud2mqtt.config import load_config
+from src.hyponcloud2mqtt.config import load_config
 
 def test_load_config_success():
     mock_yaml_content = """

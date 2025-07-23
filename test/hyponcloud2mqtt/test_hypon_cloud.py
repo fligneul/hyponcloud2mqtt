@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from hyponcloud2mqtt.hypon_cloud import HyponCloudClient, MonitorData
+from src.hyponcloud2mqtt.hypon_cloud import HyponCloudClient, MonitorData
 import requests
 
 @pytest.fixture

@@ -1,21 +1,18 @@
-FROM python:3.12-alpine3.21 as builder
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
-
-RUN pip install --upgrade pip
+RUN apt-get update && apt-get install -y --no-install-recommends binutils
 
 COPY requirements.txt .
+RUN pip install --user -r requirements.txt pyinstaller --no-warn-script-location
 
-RUN pip wheel --no-cache-dir --wheel-dir /app/wheels .
+COPY src/hyponcloud2mqtt/ /app/hyponcloud2mqtt
+WORKDIR /app
+RUN /root/.local/bin/pyinstaller --collect-all tzdata --onefile /app/hyponcloud2mqtt/__main__.py -n hyponcloud2mqtt
 
-FROM python:3.12-alpine3.21
+FROM ubuntu:noble AS runner
+RUN apt update && apt install tzdata -y && apt clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/dist/hyponcloud2mqtt /app/
 
 WORKDIR /app
-
-COPY --from=builder /app/wheels /app/wheels
-
-RUN pip install --no-cache /app/wheels/*
-
-COPY . .
-
-CMD ["python", "-u", "hyponcloud2mqtt/main.py"]
+CMD ["./hyponcloud2mqtt"]

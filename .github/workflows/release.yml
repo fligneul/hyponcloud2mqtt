@@ -1,17 +1,25 @@
-name: 🚚 Release
+name: 🚚 Release & deploy
 on:
   push:
     branches:
       - 'main'
+
+permissions:
+  contents: read
 
 jobs:
   release:
     if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
     concurrency: release
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
+
     permissions:
-      checks: read
-      statuses: read
+      id-token: write
+      contents: write
+
     steps:
       - name: ⏰ Wait for builds to succeed
         uses: lewagon/wait-on-check-action@v1.4.0
@@ -25,82 +33,90 @@ jobs:
       - name: 🛒 Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           token: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - name: 🔖 Create semantic version release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v10.2.0
         with:
-          python-version: '3.11'
-          architecture: 'x64'
+          github_token: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+          git_committer_name: "semantic-release"
+          git_committer_email: "actions@users.noreply.github.com"
+          build: "true"
+          changelog: "true"
+          commit: "true"
+          push: "true"
+          tag: "true"
+          vcs_release: "true"
 
-      - name: 👷🏻 Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-ci.txt # Changed from requirements-ci.txt
-          pip install semantic-release build twine # Install semantic-release and build tools
+      - name: 📦 Upload release assets
+        uses: python-semantic-release/publish-action@v10.2.0
+        if: steps.release.outputs.released == 'true'
+        with:
+          github_token: ${{ secrets.SEMANTIC_PAT_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
 
-      - name: 🕵🏻 Check if release is needed
-        run: |
-          # Extract current version from pyproject.toml
-          current="$(grep -oP '^version = "\\K[0-9.]+' pyproject.toml)"
-          echo "Current version: ${current}"
+      - name: ⬆️ Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        if: steps.release.outputs.released == 'true'
+        with:
+          name: distribution-artifacts
+          path: dist
+          if-no-files-found: error
 
-          # Determine next version using semantic-release
-          next="$(python -m semantic_release version --print --no-commit)"
-          echo "Next version: ${next}"
+  deploy-pypi:
+      runs-on: ubuntu-latest
+      needs: release
+      if: ${{ needs.release.outputs.released == 'true' }}
 
-          if [ "$next" = "$current" ]; then
-            echo "release-needed=false" >> $GITHUB_ENV
-            echo "No release needed"
-          else
-            echo "release-needed=true" >> $GITHUB_ENV
-            echo "release-version=$next" >> $GITHUB_ENV
-            echo "New release needed"
-          fi
+      environment: pypi-deploy
 
-      - name: 🖋️ Set release version
-        if: ${{ env.release-needed == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.SEMANTIC_PAT_TOKEN }}
-        run: python -m semantic_release version
+      permissions:
+        contents: read
+        id-token: write
 
-      - name: 🛠️ Build dist
-        if: ${{ env.release-needed == 'true' }}
-        run: python -m build
+      steps:
+        - name: ⬇️ Download distribution artifacts
+          uses: actions/download-artifact@v4
+          id: artifact-download
+          with:
+            name: distribution-artifacts
+            path: dist
 
-      - name: 🚀 Upload to PyPI
-        if: ${{ env.release-needed == 'true' }}
-        run: python -m twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
+        - name: 🐍 Publish to PyPI
+          uses: pypa/gh-action-pypi-publish@release/v1
 
-      - name: 👾 Set up QEMU
-        if: ${{ env.release-needed == 'true' }}
+  deploy-dockerhub:
+    runs-on: ubuntu-latest
+    needs: release
+    if: ${{ needs.release.outputs.released == 'true' }}
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: ⚙️ Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: 🐳 Set up Docker Buildx
-        if: ${{ env.release-needed == 'true' }}
+      - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
 
-      - name: 🪪 Login to Docker Hub
-        if: ${{ env.release-needed == 'true' }}
+      - name: 🔑 Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 🚀 Build and push to Docker Hub
-        if: ${{ env.release-needed == 'true' }}
+      - name: 🐳 Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
           push: true
-          tags: ${{ vars.DOCKER_HUB_USER }}/hyponcloud2mqtt:${{ env.release-version }},${{ vars.DOCKER_HUB_USER }}/hyponcloud2mqtt:latest
-
-      - name: 🔖 Publish Release
-        if: ${{ env.release-needed == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.SEMANTIC_PAT_TOKEN }}
-        run: python -m semantic_release publish
+          tags: ${{ vars.DOCKERHUB_USER }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.release.outputs.version }},${{ vars.DOCKERHUB_USER }}/${{ vars.DOCKERHUB_REPOSITORY }}:latest

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from hyponcloud2mqtt.mqtt import connect_mqtt, publish_data
-from hyponcloud2mqtt.hypon_cloud import MonitorData
+from src.hyponcloud2mqtt.mqtt import connect_mqtt, publish_data
+from src.hyponcloud2mqtt.hypon_cloud import MonitorData
 import paho.mqtt.client as mqtt
 import json
 
