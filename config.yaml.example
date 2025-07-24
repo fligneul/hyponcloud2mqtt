@@ -11,6 +11,8 @@ hypon:
     - "YOUR_SYSTEM_ID"
   # Interval in seconds between data fetches from Hypon Cloud (default: 60)
   interval: 60
+  # Number of retries to attempt if fetching data fails (default: 0)
+  retries: 0
 
 # MQTT broker configuration
 mqtt:
@@ -26,9 +28,4 @@ mqtt:
   topic: "hyponcloud2mqtt/status"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
-  # Set to true to prevent actual MQTT publishing (for testing purposes, default: true)
-  dry_run: true
-  # MQTT Publish Modes:
-  #   - 'full': Publishes the entire data object as a single JSON string to a topic like 'hyponcloud2mqtt/system_id/full_data'. (Default)
-  #   - 'individual': Publishes each data attribute to a dedicated topic, e.g., 'hyponcloud2mqtt/system_id/power_pv'.
-  publish_mode: full
+  

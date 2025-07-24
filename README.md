@@ -11,6 +11,7 @@ This project was developed and tested using data from an **HMS800-C** inverter. 
 
 *   Fetches the latest data from the Hypon Cloud API.
 *   Publishes data to a configurable MQTT topic.
+*   Publishes service status (online/offline) using MQTT Last Will and Testament (LWT).
 *   Automatically handles API token acquisition and renewal.
 *   Configuration via a simple `config.yaml` file.
 *   Support for retained MQTT messages.
@@ -82,12 +83,12 @@ mqtt:
   topic: "hyponcloud2mqtt/status"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
-  # Set to true to prevent actual MQTT publishing (for testing purposes, default: true)
-  dry_run: true
-  # MQTT Publish Modes:
-  #   - 'full': Publishes the entire data object as a single JSON string to a topic like 'hyponcloud2mqtt/system_id/full_data'. (Default)
-  #   - 'individual': Publishes each data attribute to a dedicated topic, e.g., 'hyponcloud2mqtt/system_id/power_pv'.
-  publish_mode: full
+  
+
+  # Last Will and Testament (LWT) configuration
+  # Topic to publish the service status (e.g., "hyponcloud2mqtt/status")
+  lwt_topic: "hyponcloud2mqtt/status"
+  
 ```
 
 ## Usage
@@ -132,14 +133,11 @@ This is the recommended way to run the application as a long-running service.
     *   `--restart unless-stopped`: Ensures the container restarts automatically if it crashes.
     *   `-v $(pwd)/config.yaml:/app/config.yaml`: Mounts your local configuration file into the container.
 
-## MQTT Output Examples
-
-Assuming a `topic` of `hyponcloud2mqtt/status` and `system_id` of `123456` in your `config.yaml`:
-
-### Full Publish Mode (`publish_mode: full`)
+## MQTT Output Example
+Assuming a `topic` of `hyponcloud2mqtt` and `system_id` of `123456` in your `config.yaml`:
 
 The entire data object will be published as a single JSON string to:
-`hyponcloud2mqtt/status/123456/full_data`
+`hyponcloud2mqtt/123456`
 
 Example Payload:
 
@@ -166,30 +164,7 @@ Example Payload:
 }
 ```
 
-### Individual Publish Mode (`publish_mode: individual`)
 
-Each data attribute will be published to a dedicated topic.
-
-Examples:
-
-*   `hyponcloud2mqtt/status/123456/monetary`: `USD`
-*   `hyponcloud2mqtt/status/123456/today_earning`: `10.0`
-*   `hyponcloud2mqtt/status/123456/month_earning`: `100.0`
-*   `hyponcloud2mqtt/status/123456/total_earning`: `1000.0`
-*   `hyponcloud2mqtt/status/123456/e_total`: `5000.0`
-*   `hyponcloud2mqtt/status/123456/e_month`: `500.0`
-*   `hyponcloud2mqtt/status/123456/e_today`: `50.0`
-*   `hyponcloud2mqtt/status/123456/e_year`: `2000.0`
-*   `hyponcloud2mqtt/status/123456/total_tree`: `5`
-*   `hyponcloud2mqtt/status/123456/total_co2`: `10`
-*   `hyponcloud2mqtt/status/123456/total_diesel`: `20`
-*   `hyponcloud2mqtt/status/123456/percent`: `90.0`
-*   `hyponcloud2mqtt/status/123456/meter_power`: `5.0`
-*   `hyponcloud2mqtt/status/123456/power_load`: `2.0`
-*   `hyponcloud2mqtt/status/123456/w_cha`: `1.0`
-*   `hyponcloud2mqtt/status/123456/power_pv`: `3.0`
-*   `hyponcloud2mqtt/status/123456/soc`: `0`
-*   `hyponcloud2mqtt/status/123456/micro`: `1`
 
 ## License
 

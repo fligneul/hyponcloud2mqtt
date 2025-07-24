@@ -1,5 +1,7 @@
 """Configuration loading module."""
+
 import yaml
+
 
 def load_config():
     """Loads configuration from config.yaml."""
