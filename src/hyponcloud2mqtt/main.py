@@ -4,7 +4,7 @@ import time
 import logging
 from .config import load_config
 from .hypon_cloud import HyponCloudClient
-from .mqtt import connect_mqtt, publish_data
+from .mqtt import connect_mqtt, publish_data, publish_ha_discovery
 
 
 def main():
@@ -21,6 +21,10 @@ def main():
     lwt_topic = config.get("mqtt", {}).get("topic") + "/status"
     if lwt_topic:
         mqtt_client.publish(lwt_topic, "online", retain=True)
+
+    # Publish Home Assistant discovery messages
+    for system_id in config.get("hypon", {}).get("system_ids", []):
+        publish_ha_discovery(mqtt_client, config, system_id)
 
     mqtt_client.loop_start()
     while True:
