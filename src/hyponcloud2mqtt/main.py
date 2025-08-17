@@ -4,7 +4,7 @@ import time
 import logging
 from .config import load_config
 from .hypon_cloud import HyponCloudClient
-from .mqtt import connect_mqtt, publish_data
+from .mqtt import connect_mqtt, publish_data, publish_discovery_message, set_online
 
 
 def main():
@@ -16,13 +16,14 @@ def main():
     config = load_config()
     hypon_client = HyponCloudClient(config=config)
     mqtt_client = connect_mqtt(config)
-
-    # Publish online message to LWT topic
-    lwt_topic = config.get("mqtt", {}).get("topic") + "/status"
-    if lwt_topic:
-        mqtt_client.publish(lwt_topic, "online", retain=True)
+    
+    set_online(mqtt_client, config)
 
     mqtt_client.loop_start()
+    
+    # Keep track of discovered systems
+    discovered_systems = set()
+    
     while True:
         hypon_config = config.get("hypon", {})
         system_ids = hypon_config.get("system_ids", [])
@@ -35,6 +36,11 @@ def main():
                 if data:
                     logging.info("Data received for system ID %s: %s", system_id, data)
                     publish_data(mqtt_client, config, system_id, data)
+                    
+                    if system_id not in discovered_systems:
+                        publish_discovery_message(mqtt_client, config, system_id, data)
+                        discovered_systems.add(system_id)
+                        
         time.sleep(interval)
 
 

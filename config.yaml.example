@@ -28,4 +28,10 @@ mqtt:
   topic: "hyponcloud2mqtt/status"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
+  # Home Assistant MQTT discovery configuration (optional)
+  discovery:
+    # Set to true to enable Home Assistant MQTT discovery (default: false)
+    enabled: false
+    # The prefix to use for the discovery topic (default: "homeassistant")
+    prefix: "homeassistant"
   
