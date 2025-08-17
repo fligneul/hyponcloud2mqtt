@@ -20,9 +20,8 @@ def connect_mqtt(config):
     if mqtt_config.get("user"):
         client.username_pw_set(mqtt_config.get("user"), mqtt_config.get("password"))
 
-    # Enable TLS for port 8883
-    # if mqtt_config.get("port") == 8883:
-    # client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
+    if mqtt_config.get("ssl"):
+        client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
