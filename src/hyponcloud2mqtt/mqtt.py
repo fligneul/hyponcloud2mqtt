@@ -46,5 +46,5 @@ def publish_data(client, config, system_id, data):
     retain = mqtt_config.get("retain", False)
 
     # Publish the whole object as JSON
-    data_topic = f"{base_topic}/{system_id}"
+    data_topic = f"{base_topic}/data/{system_id}"
     client.publish(data_topic, json.dumps(data.__dict__), retain=retain)
