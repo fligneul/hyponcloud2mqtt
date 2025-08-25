@@ -27,6 +27,7 @@ hypon:
 # Environment variable: MQTT_PASSWORD
 # Environment variable: MQTT_TOPIC
 # Environment variable: MQTT_RETAIN
+# Environment variable: MQTT_SSL
 mqtt:
   # MQTT broker hostname or IP address
   host: "localhost"
@@ -40,3 +41,6 @@ mqtt:
   topic: "hyponcloud2mqtt"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
+  # Set to true to enable SSL/TLS encryption (default: false)
+  ssl: false
+  

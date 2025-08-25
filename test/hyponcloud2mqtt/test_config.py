@@ -29,6 +29,7 @@ mqtt:
                     "password": "",
                     "topic": "hyponcloud2mqtt",
                     "retain": False,
+                    "ssl": False,
                 },
             }
 
@@ -40,19 +41,22 @@ hypon:
 mqtt:
   host: "yaml_host"
   port: 1883
+  ssl: false
 """
     with patch("builtins.open", mock_open(read_data=mock_yaml_content)):
-        with patch("yaml.safe_load", return_value={"hypon": {"user": "yaml_user", "password": "yaml_password"}, "mqtt": {"host": "yaml_host", "port": 1883}}):
+        with patch("yaml.safe_load", return_value={"hypon": {"user": "yaml_user", "password": "yaml_password"}, "mqtt": {"host": "yaml_host", "port": 1883, "ssl": False}}):
             with patch.dict("os.environ", {
                 "HYPON_USER": "env_user",
                 "MQTT_HOST": "env_host",
-                "MQTT_PORT": "8883"
+                "MQTT_PORT": "8883",
+                "MQTT_SSL": "true"
             }):
                 config = load_config()
                 assert config["hypon"]["user"] == "env_user"
                 assert config["hypon"]["password"] == "yaml_password"
                 assert config["mqtt"]["host"] == "env_host"
                 assert config["mqtt"]["port"] == 8883
+                assert config["mqtt"]["ssl"] is True
 
 def test_load_config_file_not_found():
     with patch("builtins.open", side_effect=FileNotFoundError):

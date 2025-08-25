@@ -57,6 +57,7 @@ def get_default_config():
             "password": "",
             "topic": "hyponcloud2mqtt",
             "retain": False,
+            "ssl": False,
         },
     }
 
