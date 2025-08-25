@@ -21,9 +21,8 @@ def connect_mqtt(config: Dict):
     if mqtt_config.get("user"):
         client.username_pw_set(mqtt_config.get("user"), mqtt_config.get("password"))
 
-    # Enable TLS for port 8883
-    # if mqtt_config.get("port") == 8883:
-    # client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
+    if mqtt_config.get("ssl"):
+        client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
@@ -48,7 +47,7 @@ def publish_data(client, config, system_id, data):
     retain = mqtt_config.get("retain", False)
 
     # Publish the whole object as JSON
-    data_topic = f"{base_topic}/{system_id}"
+    data_topic = f"{base_topic}/data/{system_id}"
     client.publish(data_topic, json.dumps(data.__dict__), retain=retain)
 
 
@@ -61,7 +60,7 @@ def publish_discovery_message(client, config, system_id, data):
 
     discovery_prefix = discovery_config.get("prefix", "homeassistant")
     base_topic = mqtt_config.get("topic", "hyponcloud2mqtt")
-    data_topic = f"{base_topic}/{system_id}"
+    data_topic = f"{base_topic}/data/{system_id}"
     availability_topic = f"{base_topic}/status"
 
     device_info = {

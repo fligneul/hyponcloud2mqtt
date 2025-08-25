@@ -1,4 +1,10 @@
 # Hypon Cloud API configuration
+# Environment variable: HYPON_USER
+# Environment variable: HYPON_PASSWORD
+# Environment variable: HYPON_API_BASE_URL
+# Environment variable: HYPON_SYSTEM_IDS (comma-separated string)
+# Environment variable: HYPON_INTERVAL
+# Environment variable: HYPON_RETRIES
 hypon:
   # Your Hypon Cloud username
   user: "YOUR_USER"
@@ -15,6 +21,13 @@ hypon:
   retries: 0
 
 # MQTT broker configuration
+# Environment variable: MQTT_HOST
+# Environment variable: MQTT_PORT
+# Environment variable: MQTT_USER
+# Environment variable: MQTT_PASSWORD
+# Environment variable: MQTT_TOPIC
+# Environment variable: MQTT_RETAIN
+# Environment variable: MQTT_SSL
 mqtt:
   # MQTT broker hostname or IP address
   host: "localhost"
@@ -25,9 +38,11 @@ mqtt:
   # MQTT password (optional)
   password: ""
   # Base MQTT topic for publishing data (e.g., "hyponcloud2mqtt/status")
-  topic: "hyponcloud2mqtt/status"
+  topic: "hyponcloud2mqtt"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
+  # Set to true to enable SSL/TLS encryption (default: false)
+  ssl: false
   # Home Assistant MQTT discovery configuration (optional)
   discovery:
     # Set to true to enable Home Assistant MQTT discovery (default: false)

@@ -75,16 +75,17 @@ def test_connect_mqtt_no_auth(mock_config, mock_mqtt_client):
 
 def test_publish_data(mock_config, mock_mqtt_client, mock_monitor_data):
     publish_data(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
-    expected_topic = "test/hypon/test_system_id"
+    expected_topic = "test/hypon/data/test_system_id"
     expected_payload = json.dumps(mock_monitor_data.__dict__)
     mock_mqtt_client.publish.assert_called_once_with(
         expected_topic, expected_payload, retain=False
     )
 
+
 def test_publish_data_retain_true(mock_config, mock_mqtt_client, mock_monitor_data):
     mock_config["mqtt"]["retain"] = True
     publish_data(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
-    expected_topic = "test/hypon/test_system_id"
+    expected_topic = "test/hypon/data/test_system_id"
     expected_payload = json.dumps(mock_monitor_data.__dict__)
     mock_mqtt_client.publish.assert_called_once_with(
         expected_topic, expected_payload, retain=True
