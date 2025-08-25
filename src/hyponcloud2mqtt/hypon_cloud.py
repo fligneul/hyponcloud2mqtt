@@ -77,7 +77,7 @@ class HyponCloudClient:
             response_json = response.json()
             if response_json.get("code") != 20000:
                 raise HyponAuthenticationError(
-                    f"Login failed: {response_json.get("message")}"
+                    f"Login failed: {response_json.get('message')}"
                 )
 
             self.token = response_json.get("data", {}).get("token")

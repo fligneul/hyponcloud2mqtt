@@ -14,6 +14,7 @@ This project was developed and tested using data from an **HMS800-C** inverter. 
 *   Publishes service status (online/offline) using MQTT Last Will and Testament (LWT).
 *   Automatically handles API token acquisition and renewal.
 *   Configuration via a simple `config.yaml` file.
+*   Support for environment variables for Dockerized deployments.
 *   Support for retained MQTT messages.
 *   Can be run directly with Python or as a Docker container.
 *   Installable via PyPI.
@@ -47,10 +48,14 @@ pip install -e .
 
 ## Configuration
 
-Before running the application, you need to create a `config.yaml` file. A template is provided in `config.yaml.dist`. Copy it and edit it with your details:
+Configuration can be provided through a `config.yaml` file or environment variables. Environment variables will always override the values in the `config.yaml` file.
+
+### `config.yaml`
+
+Before running the application, you need to create a `config.yaml` file. A template is provided in `config.yaml.example`. Copy it and edit it with your details:
 
 ```bash
-cp config.yaml.dist config.yaml
+cp config.yaml.example config.yaml
 ```
 
 Then, edit `config.yaml`:
@@ -83,13 +88,29 @@ mqtt:
   topic: "hyponcloud2mqtt/status"
   # Set to true to have messages retained by the broker (default: false)
   retain: false
-  
-
-  # Last Will and Testament (LWT) configuration
-  # Topic to publish the service status (e.g., "hyponcloud2mqtt/status")
-  lwt_topic: "hyponcloud2mqtt/status"
-  
 ```
+
+### Environment Variables
+
+You can also configure the application using environment variables. This is especially useful for Docker deployments.
+
+**Hypon Cloud Configuration:**
+
+*   `HYPON_USER`: Your Hypon Cloud username.
+*   `HYPON_PASSWORD`: Your Hypon Cloud password.
+*   `HYPON_API_BASE_URL`: Base URL for the Hypon Cloud API.
+*   `HYPON_SYSTEM_IDS`: Comma-separated list of system IDs.
+*   `HYPON_INTERVAL`: Interval in seconds for data fetching.
+*   `HYPON_RETRIES`: Number of retries on fetch failure.
+
+**MQTT Configuration:**
+
+*   `MQTT_HOST`: MQTT broker hostname.
+*   `MQTT_PORT`: MQTT broker port.
+*   `MQTT_USER`: MQTT username.
+*   `MQTT_PASSWORD`: MQTT password.
+*   `MQTT_TOPIC`: Base MQTT topic.
+*   `MQTT_RETAIN`: Set to `true` to retain MQTT messages.
 
 ## Usage
 
@@ -119,19 +140,30 @@ This is the recommended way to run the application as a long-running service.
 
 2.  **Run the container:**
 
-    Make sure your `config.yaml` file is in the current directory. The command below will mount it into the container.
+    You can either mount a `config.yaml` file or provide the configuration through environment variables.
+
+    **With `config.yaml`:**
 
     ```bash
-    docker run -d \
-      --name hyponcloud2mqtt \
-      --restart unless-stopped \
-      -v $(pwd)/config.yaml:/app/config.yaml \
-      hyponcloud2mqtt
+docker run -d \
+  --name hyponcloud2mqtt \
+  --restart unless-stopped \
+  -v $(pwd)/config.yaml:/app/config.yaml \
+  hyponcloud2mqtt
     ```
 
-    *   `-d`: Runs the container in detached mode.
-    *   `--restart unless-stopped`: Ensures the container restarts automatically if it crashes.
-    *   `-v $(pwd)/config.yaml:/app/config.yaml`: Mounts your local configuration file into the container.
+    **With environment variables:**
+
+    ```bash
+docker run -d \
+  --name hyponcloud2mqtt \
+  --restart unless-stopped \
+  -e HYPON_USER="YOUR_USER" \
+  -e HYPON_PASSWORD="YOUR_PASSWORD" \
+  -e HYPON_SYSTEM_IDS="YOUR_SYSTEM_ID" \
+  -e MQTT_HOST="your_mqtt_broker" \
+  hyponcloud2mqtt
+    ```
 
 ## MQTT Output Example
 Assuming a `topic` of `hyponcloud2mqtt` and `system_id` of `123456` in your `config.yaml`:
