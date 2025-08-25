@@ -72,25 +72,17 @@ def test_connect_mqtt_no_auth(mock_config, mock_mqtt_client):
 
 def test_publish_data(mock_config, mock_mqtt_client, mock_monitor_data):
     publish_data(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
-    expected_topic = "test/hypon/test_system_id"
+    expected_topic = "test/hypon/data/test_system_id"
     expected_payload = json.dumps(mock_monitor_data.__dict__)
     mock_mqtt_client.publish.assert_called_once_with(
         expected_topic, expected_payload, retain=False
     )
 
 
-def test_publish_data_dry_run(mock_config, mock_mqtt_client, mock_monitor_data):
-    mock_config["mqtt"]["dry_run"] = True
-    with patch("logging.info") as mock_logging_info:
-        publish_data(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
-        mock_mqtt_client.publish.assert_not_called()
-        mock_logging_info.assert_called()
-
-
 def test_publish_data_retain_true(mock_config, mock_mqtt_client, mock_monitor_data):
     mock_config["mqtt"]["retain"] = True
     publish_data(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
-    expected_topic = "test/hypon/test_system_id"
+    expected_topic = "test/hypon/data/test_system_id"
     expected_payload = json.dumps(mock_monitor_data.__dict__)
     mock_mqtt_client.publish.assert_called_once_with(
         expected_topic, expected_payload, retain=True
@@ -98,12 +90,10 @@ def test_publish_data_retain_true(mock_config, mock_mqtt_client, mock_monitor_da
 
 
 def test_connect_mqtt_with_lwt(mock_config, mock_mqtt_client):
-    mock_config["mqtt"]["lwt_topic"] = "test/lwt"
-
     client = connect_mqtt(mock_config)
 
     mock_mqtt_client.will_set.assert_called_once_with(
-        "test/lwt", "offline", retain=True
+        "test/hypon/status", "offline", retain=True
     )
     mock_mqtt_client.connect.assert_called_once_with("test_mqtt_host", 1883)
     assert client == mock_mqtt_client
