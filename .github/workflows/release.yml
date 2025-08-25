@@ -50,6 +50,7 @@ jobs:
           push: "true"
           tag: "true"
           vcs_release: "true"
+          force_level: "major"
 
       - name: 📦 Upload release assets
         uses: python-semantic-release/publish-action@v10.2.0
