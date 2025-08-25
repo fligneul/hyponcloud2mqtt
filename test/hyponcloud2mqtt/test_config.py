@@ -30,6 +30,10 @@ mqtt:
                     "topic": "hyponcloud2mqtt",
                     "retain": False,
                     "ssl": False,
+                    "discovery": {
+                        "enabled": False,
+                        "prefix": "homeassistant",
+                    },
                 },
             }
 

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from src.hyponcloud2mqtt.mqtt import connect_mqtt, publish_data
+from src.hyponcloud2mqtt.mqtt import connect_mqtt, publish_data, publish_discovery_message
 from src.hyponcloud2mqtt.hypon_cloud import MonitorData
 import paho.mqtt.client as mqtt
 import json
@@ -16,7 +16,10 @@ def mock_config():
             "password": "test_password",
             "topic": "test/hypon",
             "retain": False,
-            "dry_run": False,
+            "discovery": {
+                "enabled": True,
+                "prefix": "homeassistant"
+            }
         }
     }
 
@@ -48,7 +51,7 @@ def mock_monitor_data():
         w_cha=1.0,
         power_pv=3.0,
         soc=80.0,
-        micro=0.5,
+        micro=2,
     )
 
 
@@ -91,9 +94,13 @@ def test_publish_data_retain_true(mock_config, mock_mqtt_client, mock_monitor_da
 
 def test_connect_mqtt_with_lwt(mock_config, mock_mqtt_client):
     client = connect_mqtt(mock_config)
-
     mock_mqtt_client.will_set.assert_called_once_with(
         "test/hypon/status", "offline", retain=True
     )
     mock_mqtt_client.connect.assert_called_once_with("test_mqtt_host", 1883)
     assert client == mock_mqtt_client
+
+def test_publish_discovery_message_disabled(mock_config, mock_mqtt_client, mock_monitor_data):
+    mock_config["mqtt"]["discovery"]["enabled"] = False
+    publish_discovery_message(mock_mqtt_client, mock_config, "test_system_id", mock_monitor_data)
+    mock_mqtt_client.publish.assert_not_called()

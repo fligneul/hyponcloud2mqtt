@@ -58,6 +58,10 @@ def get_default_config():
             "topic": "hyponcloud2mqtt",
             "retain": False,
             "ssl": False,
+            "discovery": {
+                "enabled": False,
+                "prefix": "homeassistant",
+            },
         },
     }
 
