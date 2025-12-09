@@ -1,0 +1,24 @@
+{
+    "request": {
+        "method": "GET",
+        "url": "/production2"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "code": 20000,
+            "data": {
+                "today_generation": 15.5,
+                "month_generation": 450.2,
+                "year_generation": 5200.5,
+                "total_generation": 12500.0,
+                "co2_reduction": 8500.5,
+                "income": 1250.50
+            },
+            "message": "Success"
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

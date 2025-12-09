@@ -1,0 +1,88 @@
+# hyponcloud2mqtt Configuration Example
+# Copy this file to config.yaml and customize for your setup
+
+# Base URL of your API (required)
+http_url: "http://192.168.1.100"
+
+# System ID for plant-specific endpoints (required)
+# Used to construct URLs like: <base_url>/plant/<system_id>/<endpoint>
+system_id: "your_system_id"
+
+# API credentials (required for authentication)
+api_username: "your_username"
+api_password: "your_password"
+
+# SSL certificate verification (default: true)
+# Set to false only if using self-signed certificates
+verify_ssl: true
+
+# Dry Run Mode (default: false)
+# If true, MQTT messages will be logged but not published
+dry_run: false
+
+# Fetch interval in seconds (default: 60)
+http_interval: 60
+
+# MQTT Broker configuration
+mqtt_broker: "localhost"
+mqtt_port: 1883
+mqtt_topic: "solar/inverter"
+mqtt_username: null  # Optional
+mqtt_password: null  # Optional
+
+# TLS/SSL Configuration (optional)
+# mqtt_tls_enabled: false
+# mqtt_tls_insecure: false # Set to true to allow self-signed certificates
+# mqtt_ca_path: "/path/to/ca.crt" # Path to CA certificate file (if not using system CAs)
+
+# Home Assistant Discovery (optional)
+# ha_discovery_enabled: false
+ha_discovery_prefix: "homeassistant"
+# Device name for Home Assistant (default: hyponcloud2mqtt)
+device_name: "Solar Inverter"
+
+# Sensors for Home Assistant auto-discovery (optional)
+sensors:
+  - name: "Solar Power"
+    unique_id: "solar_power_pv"
+    value_template: "{{ value_json.power_pv }}"
+    device_class: "power"
+    unit_of_measurement: "W"
+  
+  - name: "Solar Generation Today"
+    unique_id: "solar_gen_today"
+    value_template: "{{ value_json.today_generation }}"
+    device_class: "energy"
+    unit_of_measurement: "kWh"
+  
+  - name: "Solar Generation Total"
+    unique_id: "solar_gen_total"
+    value_template: "{{ value_json.total_generation }}"
+    device_class: "energy"
+    unit_of_measurement: "kWh"
+  
+  - name: "Grid Power"
+    unique_id: "grid_power"
+    value_template: "{{ value_json.meter_power }}"
+    device_class: "power"
+    unit_of_measurement: "W"
+  
+  - name: "Load Power"
+    unique_id: "load_power"
+    value_template: "{{ value_json.power_load }}"
+    device_class: "power"
+    unit_of_measurement: "W"
+  
+  - name: "Battery Charge"
+    unique_id: "battery_charge"
+    value_template: "{{ value_json.w_cha }}"
+    device_class: "power"
+    unit_of_measurement: "W"
+  
+  - name: "Inverter Online"
+    unique_id: "inverter_online"
+    value_template: "{{ value_json.inverter.online }}"
+  
+  - name: "Gateway Online"
+    unique_id: "gateway_online"
+    value_template: "{{ value_json.gateway.online }}"

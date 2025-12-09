@@ -1,0 +1,30 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPath": "/monitor",
+        "queryParameters": {
+            "refresh": {
+                "equalTo": "true"
+            }
+        }
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "code": 20000,
+            "data": {
+                "serial_number": "TEST123456",
+                "status": 1,
+                "battery_level": 85,
+                "battery_power": 1200,
+                "grid_power": 500,
+                "load_power": 2500,
+                "pv_power": 3200
+            },
+            "message": "Success"
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

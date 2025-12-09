@@ -1,0 +1,19 @@
+{
+    "request": {
+        "method": "POST",
+        "url": "/login"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "code": 20000,
+            "data": {
+                "token": "mock_bearer_token_12345"
+            },
+            "message": "Success"
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

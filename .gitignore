@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+.venv/
+.venv_verify/
+venv/
+env/
+
+# Version file (auto-generated)
+src/hyponcloud2mqtt/_version.py
+
+# Security: Prevent committing secrets
+.env
+config.yaml
+config.yaml.local
+secrets/
+*.secret
+
+# OS files
+.DS_Store

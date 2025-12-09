@@ -1,0 +1,22 @@
+{
+    "request": {
+        "method": "GET",
+        "url": "/status"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "code": 20000,
+            "data": {
+                "device_status": "Normal",
+                "connection_status": "Online",
+                "last_update": "2023-10-27T10:00:00Z",
+                "firmware_version": "V1.0.0"
+            },
+            "message": "Success"
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

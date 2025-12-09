@@ -1,0 +1,206 @@
+from __future__ import annotations
+import json
+import logging
+import threading
+import paho.mqtt.client as mqtt
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .config import SensorConfig
+
+logger = logging.getLogger(__name__)
+
+
+class MqttClient:
+    def __init__(
+            self,
+            broker: str,
+            port: int,
+            topic: str,
+            availability_topic: str,
+            username: str | None = None,
+            password: str | None = None,
+            dry_run: bool = False,
+            tls_enabled: bool = False,
+            tls_insecure: bool = False,
+            ca_path: str | None = None):
+        self.broker = broker
+        self.port = port
+        self.topic = topic
+        self.availability_topic = availability_topic
+        self.dry_run = dry_run
+        self.connected = False
+        self._connection_event = threading.Event()
+        self._connection_result = None
+        self.client = mqtt.Client()
+
+        if username and password:
+            self.client.username_pw_set(username, password)
+            logger.debug(
+                f"MQTT authentication configured for user: {username}")
+
+        if tls_enabled:
+            # Enable TLS
+            # If ca_path is None, it uses system default CAs
+            self.client.tls_set(ca_certs=ca_path)
+
+            if tls_insecure:
+                self.client.tls_insecure_set(True)
+
+            logger.debug(f"MQTT TLS enabled (insecure: {tls_insecure})")
+
+        # Set LWT
+        self.client.will_set(self.availability_topic, "offline", retain=True)
+        logger.debug(
+            f"MQTT Last Will and Testament set to {availability_topic}")
+
+        self.client.on_connect = self._on_connect
+        self.client.on_disconnect = self._on_disconnect
+
+    def _on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            logger.info(
+                f"Connected to MQTT broker at {self.broker}:{self.port}")
+            self.connected = True
+            # Publish online status
+            self.client.publish(self.availability_topic, "online", retain=True)
+            logger.debug(f"Published 'online' to {self.availability_topic}")
+        else:
+            self.connected = False
+            logger.error(f"Failed to connect to MQTT broker, return code {rc}")
+        
+        # Signal connection attempt completed
+        self._connection_result = rc
+        self._connection_event.set()
+
+    def _on_disconnect(self, client, userdata, rc):
+        self.connected = False
+        if rc != 0:
+            logger.warning("Unexpected disconnection from MQTT broker")
+
+    def connect(self, timeout: int = 10) -> bool:
+        """Connect to MQTT broker and wait for connection to succeed or fail.
+        
+        Args:
+            timeout: Maximum seconds to wait for connection (default: 10)
+            
+        Returns:
+            True if connected successfully, False otherwise
+        """
+        logger.info(
+            f"Connecting to MQTT broker at {self.broker}:{self.port}...")
+        
+        # Reset connection event
+        self._connection_event.clear()
+        self._connection_result = None
+        
+        try:
+            self.client.connect(self.broker, self.port, 60)
+            self.client.loop_start()
+            logger.debug("MQTT client loop started")
+        except Exception as e:
+            logger.error(f"Error connecting to MQTT broker: {e}")
+            return False
+        
+        # Wait for connection callback
+        if self._connection_event.wait(timeout):
+            # Connection attempt completed
+            if self._connection_result == 0:
+                return True
+            else:
+                logger.error(
+                    f"MQTT connection failed with code {self._connection_result}")
+                return False
+        else:
+            logger.error(f"MQTT connection timeout after {timeout} seconds")
+            return False
+
+    def disconnect(self):
+        if not self.dry_run and self.connected:
+            try:
+                logger.debug(f"Publishing 'offline' to {self.availability_topic}")
+                info = self.client.publish(self.availability_topic, "offline", retain=True)
+                # Wait for the message to be published (with timeout to not block shutdown)
+                info.wait_for_publish(timeout=2.0)
+                logger.debug("Offline status published successfully")
+            except Exception as e:
+                logger.warning(f"Failed to publish offline status: {e}")
+        
+        logger.info("Disconnecting from MQTT broker...")
+        self.client.loop_stop()
+        self.client.disconnect()
+        logger.debug("MQTT client disconnected")
+
+    def publish(self, data: Any):
+        if self.dry_run:
+            payload = json.dumps(data, indent=2)
+            logger.info(f"[DRY RUN] Would publish to {self.topic}:\n{payload}")
+            return
+
+        try:
+            payload = json.dumps(data)
+            logger.debug(f"Publishing {len(payload)} bytes to {self.topic}")
+            info = self.client.publish(self.topic, payload)
+            info.wait_for_publish()
+            logger.debug(f"Data published successfully to {self.topic}")
+        except Exception as e:
+            logger.error(f"Error publishing to MQTT: {e}")
+
+    def publish_discovery(
+            self,
+            sensor: SensorConfig,
+            device_name: str,
+            discovery_prefix: str,
+            state_topic: str):
+        if self.dry_run:
+            logger.info(
+                f"[DRY RUN] Would publish Home Assistant discovery for '{sensor.name}'")
+            return
+
+        if not self.connected:
+            logger.warning(
+                f"Cannot publish discovery for '{sensor.name}': MQTT not connected")
+            return
+
+        try:
+            # Construct unique ID and Topic
+            # Topic: <prefix>/sensor/<device_name>/<sensor_unique_id>/config
+            # We use device_name as node_id
+
+            # Sanitize IDs for topic
+            safe_device_name = device_name.replace(" ", "_").lower()
+            safe_sensor_id = sensor.unique_id.replace(" ", "_").lower()
+
+            topic = f"{discovery_prefix}/sensor/{safe_device_name}/{safe_sensor_id}/config"
+
+            payload = {
+                "name": sensor.name,
+                "unique_id": f"{safe_device_name}_{safe_sensor_id}",
+                "state_topic": state_topic,
+                "value_template": sensor.value_template,
+                "device": {
+                    "identifiers": [safe_device_name],
+                    "name": device_name,
+                    "manufacturer": "hyponcloud2mqtt",
+                }
+            }
+
+            if sensor.device_class:
+                payload["device_class"] = sensor.device_class
+
+            if sensor.unit_of_measurement:
+                payload["unit_of_measurement"] = sensor.unit_of_measurement
+
+            # Add availability
+            payload["availability_topic"] = self.availability_topic
+            payload["payload_available"] = "online"
+            payload["payload_not_available"] = "offline"
+
+            json_payload = json.dumps(payload)
+            info = self.client.publish(topic, json_payload, retain=True)
+            info.wait_for_publish()
+            logger.info(
+                f"Published Home Assistant discovery for '{sensor.name}' to {topic}")
+
+        except Exception as e:
+            logger.error(f"Error publishing discovery for {sensor.name}: {e}")
