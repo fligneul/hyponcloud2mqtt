@@ -39,6 +39,18 @@ class Config:
     device_name: str = "hyponcloud2mqtt"
     sensors: List[SensorConfig] = field(default_factory=list)
 
+    def __repr__(self) -> str:
+        # Redact sensitive fields for logging
+        redacted_fields = self.__dict__.copy()
+        if 'api_password' in redacted_fields:
+            redacted_fields['api_password'] = '********'
+        if 'mqtt_password' in redacted_fields:
+            redacted_fields['mqtt_password'] = '********'
+
+        fields_str = ', '.join(
+            f"{k}={v!r}" for k, v in redacted_fields.items())
+        return f"Config({fields_str})"
+
     @classmethod
     def load(cls, config_path: str | None = None) -> "Config":
         # Defaults
@@ -65,6 +77,7 @@ class Config:
             "device_name": "hyponcloud2mqtt",
             "sensors": [],
         }
+        logger.debug(f"Initial default config: {config}")
 
         # Load from file if exists
         if config_path and os.path.exists(config_path):
@@ -73,6 +86,8 @@ class Config:
                 with open(config_path, 'r') as f:
                     file_config = yaml.safe_load(f)
                     if file_config:
+                        logger.debug(
+                            f"Updating config from file: {config_path}")
                         config.update(file_config)
             except Exception as e:
                 logger.warning(f"Error loading config file {config_path}: {e}")
@@ -85,78 +100,97 @@ class Config:
                     "No config file specified, using defaults and environment variables")
 
         # Override with Env Vars (Env > File > Defaults)
+        env_overrides = {}
         if os.getenv("HTTP_URL"):
-            config["http_url"] = os.getenv("HTTP_URL")
+            env_overrides["http_url"] = os.getenv("HTTP_URL")
 
         if os.getenv("SYSTEM_ID"):
-            config["system_id"] = os.getenv("SYSTEM_ID")
+            env_overrides["system_id"] = os.getenv("SYSTEM_ID")
 
         if os.getenv("HTTP_INTERVAL"):
             try:
-                config["http_interval"] = int(os.getenv("HTTP_INTERVAL"))
+                env_overrides["http_interval"] = int(
+                    os.getenv("HTTP_INTERVAL"))
             except ValueError:
                 pass
 
         if os.getenv("MQTT_BROKER"):
-            config["mqtt_broker"] = os.getenv("MQTT_BROKER")
+            env_overrides["mqtt_broker"] = os.getenv("MQTT_BROKER")
 
         if os.getenv("MQTT_PORT"):
             try:
-                config["mqtt_port"] = int(os.getenv("MQTT_PORT"))
+                env_overrides["mqtt_port"] = int(os.getenv("MQTT_PORT"))
             except ValueError:
                 pass
 
         if os.getenv("MQTT_TOPIC"):
-            config["mqtt_topic"] = os.getenv("MQTT_TOPIC")
+            env_overrides["mqtt_topic"] = os.getenv("MQTT_TOPIC")
 
         if os.getenv("MQTT_AVAILABILITY_TOPIC"):
-            config["mqtt_availability_topic"] = os.getenv(
+            env_overrides["mqtt_availability_topic"] = os.getenv(
                 "MQTT_AVAILABILITY_TOPIC")
+
+        if os.getenv("MQTT_USERNAME"):
+            env_overrides["mqtt_username"] = os.getenv("MQTT_USERNAME")
+
+        if os.getenv("MQTT_PASSWORD"):
+            env_overrides["mqtt_password"] = os.getenv("MQTT_PASSWORD")
+
+        if os.getenv("MQTT_TLS_ENABLED"):
+            env_overrides["mqtt_tls_enabled"] = os.getenv(
+                "MQTT_TLS_ENABLED").lower() in ("true", "1", "yes")
+
+        if os.getenv("MQTT_TLS_INSECURE"):
+            env_overrides["mqtt_tls_insecure"] = os.getenv(
+                "MQTT_TLS_INSECURE").lower() in ("true", "1", "yes")
+
+        if os.getenv("MQTT_CA_PATH"):
+            env_overrides["mqtt_ca_path"] = os.getenv("MQTT_CA_PATH")
+
+        if os.getenv("API_USERNAME"):
+            env_overrides["api_username"] = os.getenv("API_USERNAME")
+
+        if os.getenv("API_PASSWORD"):
+            env_overrides["api_password"] = os.getenv("API_PASSWORD")
+
+        if os.getenv("HA_DISCOVERY_PREFIX"):
+            env_overrides["ha_discovery_prefix"] = os.getenv(
+                "HA_DISCOVERY_PREFIX")
+
+        if os.getenv("DEVICE_NAME"):
+            env_overrides["device_name"] = os.getenv("DEVICE_NAME")
+
+        if os.getenv("VERIFY_SSL"):
+            env_overrides["verify_ssl"] = os.getenv(
+                "VERIFY_SSL").lower() in ("true", "1", "yes")
+
+        if os.getenv("DRY_RUN"):
+            env_overrides["dry_run"] = os.getenv(
+                "DRY_RUN").lower() in ("true", "1", "yes")
+
+        if os.getenv("HA_DISCOVERY_ENABLED"):
+            env_overrides["ha_discovery_enabled"] = os.getenv(
+                "HA_DISCOVERY_ENABLED").lower() in ("true", "1", "yes")
+
+        if env_overrides:
+            # Redact sensitive keys for logging
+            redacted_overrides = {
+                k: v for k, v in env_overrides.items()
+                if 'password' not in k.lower() and 'token' not in k.lower()
+            }
+            for k in env_overrides:
+                if 'password' in k.lower() or 'token' in k.lower():
+                    redacted_overrides[k] = '********'
+
+            logger.debug(
+                f"Applying environment variable overrides: {redacted_overrides}")
+            config.update(env_overrides)
 
         # Default availability topic if not set
         if not config.get("mqtt_availability_topic"):
             config["mqtt_availability_topic"] = f"{config['mqtt_topic']}/status"
-
-        if os.getenv("MQTT_USERNAME"):
-            config["mqtt_username"] = os.getenv("MQTT_USERNAME")
-
-        if os.getenv("MQTT_PASSWORD"):
-            config["mqtt_password"] = os.getenv("MQTT_PASSWORD")
-
-        if os.getenv("MQTT_TLS_ENABLED"):
-            config["mqtt_tls_enabled"] = os.getenv(
-                "MQTT_TLS_ENABLED").lower() in ("true", "1", "yes")
-
-        if os.getenv("MQTT_TLS_INSECURE"):
-            config["mqtt_tls_insecure"] = os.getenv(
-                "MQTT_TLS_INSECURE").lower() in ("true", "1", "yes")
-
-        if os.getenv("MQTT_CA_PATH"):
-            config["mqtt_ca_path"] = os.getenv("MQTT_CA_PATH")
-
-        if os.getenv("API_USERNAME"):
-            config["api_username"] = os.getenv("API_USERNAME")
-
-        if os.getenv("API_PASSWORD"):
-            config["api_password"] = os.getenv("API_PASSWORD")
-
-        if os.getenv("HA_DISCOVERY_PREFIX"):
-            config["ha_discovery_prefix"] = os.getenv("HA_DISCOVERY_PREFIX")
-
-        if os.getenv("DEVICE_NAME"):
-            config["device_name"] = os.getenv("DEVICE_NAME")
-
-        if os.getenv("VERIFY_SSL"):
-            config["verify_ssl"] = os.getenv(
-                "VERIFY_SSL").lower() in ("true", "1", "yes")
-
-        if os.getenv("DRY_RUN"):
-            config["dry_run"] = os.getenv(
-                "DRY_RUN").lower() in ("true", "1", "yes")
-
-        if os.getenv("HA_DISCOVERY_ENABLED"):
-            config["ha_discovery_enabled"] = os.getenv(
-                "HA_DISCOVERY_ENABLED").lower() in ("true", "1", "yes")
+            logger.debug(
+                f"Defaulting mqtt_availability_topic to: {config['mqtt_availability_topic']}")
 
         # Parse sensors from config file (already loaded in config dict)
         # Convert dicts to SensorConfig objects

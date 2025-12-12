@@ -34,9 +34,12 @@ class Daemon:
         config_path = os.getenv("CONFIG_FILE", "config.yaml")
         try:
             config = Config.load(config_path)
+            logger.debug(f"Loaded configuration: {config}")
         except Exception as e:
             logger.critical(f"Configuration error: {e}")
             sys.exit(1)
+
+        logger.info("Initializing MQTT client...")
         mqtt_client = MqttClient(
             config.mqtt_broker,
             config.mqtt_port,

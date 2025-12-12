@@ -81,6 +81,10 @@ class DataFetcher:
                     production_data = future_production.result()
                     status_data = future_status.result()
 
+                    logger.debug(f"Monitor data: {monitor_data}")
+                    logger.debug(f"Production data: {production_data}")
+                    logger.debug(f"Status data: {status_data}")
+
                 # If we got here, all requests succeeded (or failed without
                 # AuthError)
                 break
@@ -122,4 +126,6 @@ class DataFetcher:
             return None
 
         # Merge data
-        return merge_api_data(monitor_data, production_data, status_data)
+        merged_data = merge_api_data(monitor_data, production_data, status_data)
+        logger.debug(f"Merged data: {merged_data}")
+        return merged_data

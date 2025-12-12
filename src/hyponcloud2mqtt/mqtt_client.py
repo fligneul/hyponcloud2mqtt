@@ -56,6 +56,8 @@ class MqttClient:
 
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
+        self.client.on_publish = self._on_publish
+        self.client.on_log = self._on_log
 
     def _on_connect(self, client, userdata, flags, rc):
         if rc == 0:
@@ -75,8 +77,29 @@ class MqttClient:
 
     def _on_disconnect(self, client, userdata, rc):
         self.connected = False
-        if rc != 0:
-            logger.warning("Unexpected disconnection from MQTT broker")
+        if rc == 0:
+            logger.info("Disconnected from MQTT broker")
+        else:
+            logger.warning(f"Unexpected disconnection from MQTT broker, return code: {rc}")
+
+    def _on_publish(self, client, userdata, mid):
+        logger.debug(f"MQTT message published (mid: {mid})")
+
+    def _on_log(self, client, userdata, level, buf):
+        # Forward paho-mqtt logs to our logger
+        # Mapping paho-mqtt levels to Python logging levels
+        if level == mqtt.MQTT_LOG_INFO:
+            logger.debug(f"paho-mqtt: {buf}")
+        elif level == mqtt.MQTT_LOG_NOTICE:
+            logger.info(f"paho-mqtt: {buf}")
+        elif level == mqtt.MQTT_LOG_WARNING:
+            logger.warning(f"paho-mqtt: {buf}")
+        elif level == mqtt.MQTT_LOG_ERR:
+            logger.error(f"paho-mqtt: {buf}")
+        elif level == mqtt.MQTT_LOG_DEBUG:
+            # Lowering paho-mqtt debug messages to our trace level if we had
+            # one
+            logger.debug(f"paho-mqtt-debug: {buf}")
 
     def connect(self, timeout: int = 10) -> bool:
         """Connect to MQTT broker and wait for connection to succeed or fail.
@@ -197,6 +220,8 @@ class MqttClient:
             payload["payload_not_available"] = "offline"
 
             json_payload = json.dumps(payload)
+            logger.debug(
+                f"Publishing discovery for '{sensor.name}' to {topic}: {json_payload}")
             info = self.client.publish(topic, json_payload, retain=True)
             info.wait_for_publish()
             logger.info(

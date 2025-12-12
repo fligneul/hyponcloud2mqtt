@@ -1,4 +1,5 @@
 from __future__ import annotations
+import copy
 import requests
 import logging
 from typing import Any
@@ -49,12 +50,24 @@ class HttpClient:
         }
 
         try:
+            # Redact password for logging
+            log_payload = payload.copy()
+            if 'password' in log_payload:
+                log_payload['password'] = '********'
+            logger.debug(f"Login payload: {log_payload}")
+
             response = requests.post(
                 login_url, json=payload, timeout=10, verify=verify_ssl)
             logger.debug(
                 f"Login request sent, status code: {response.status_code}")
             response.raise_for_status()
             data = response.json()
+
+            # Redact token for logging
+            log_data = copy.deepcopy(data)
+            if 'data' in log_data and 'token' in log_data.get('data', {}):
+                log_data['data']['token'] = '********'
+            logger.debug(f"Login response data: {log_data}")
 
             # Validate response
             if not isinstance(data, dict):
