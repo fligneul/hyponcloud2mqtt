@@ -13,6 +13,7 @@ def test_discovery_disabled_by_default():
         # Setup config with discovery disabled (default)
         config = Config(
             http_url="http://mock",
+            system_ids=["12345"],
             http_interval=60,
             mqtt_broker="localhost",
             mqtt_port=1883,
@@ -24,7 +25,7 @@ def test_discovery_disabled_by_default():
         mock_config_load.return_value = config
 
         # Mock Daemon to run once and stop
-        daemon = Daemon()
+        daemon = Daemon(config)
         daemon.running = False  # Stop immediately after one loop
 
         # We need to mock the run loop to avoid infinite loop if logic fails,
@@ -59,17 +60,23 @@ def test_discovery_enabled():
         # Setup config with discovery ENABLED
         config = Config(
             http_url="http://mock",
+            system_ids=["12345"],
             http_interval=60,
             mqtt_broker="localhost",
             mqtt_port=1883,
             mqtt_topic="topic",
             mqtt_availability_topic="avail",
             ha_discovery_enabled=True,
-            sensors=[SensorConfig("test", "id", "tmpl")]
+            sensors=[SensorConfig("test", "id", "tmpl")],
+            dry_run=False
         )
         mock_config_load.return_value = config
 
-        daemon = Daemon()
+        # Mock MQTT client to be connected
+        mock_mqtt_instance = mock_mqtt_cls.return_value
+        mock_mqtt_instance.connected = True
+
+        daemon = Daemon(config)
         daemon.running = False  # Skip loop
 
         # Run daemon
@@ -79,5 +86,4 @@ def test_discovery_enabled():
             pass
 
         # Verify publish_discovery WAS called
-        mock_mqtt_instance = mock_mqtt_cls.return_value
         mock_mqtt_instance.publish_discovery.assert_called()

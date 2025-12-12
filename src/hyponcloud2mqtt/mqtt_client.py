@@ -131,18 +131,24 @@ class MqttClient:
         self.client.disconnect()
         logger.debug("MQTT client disconnected")
 
-    def publish(self, data: Any):
+    def publish(self, data: Any, topic: str | None = None):
+        """Publish data to a specific topic, or the default if not provided."""
+        publish_topic = topic if topic is not None else self.topic
+
         if self.dry_run:
             payload = json.dumps(data, indent=2)
-            logger.info(f"[DRY RUN] Would publish to {self.topic}:\n{payload}")
+            logger.info(
+                f"[DRY RUN] Would publish to {publish_topic}:\n{payload}")
             return
 
         try:
             payload = json.dumps(data)
-            logger.debug(f"Publishing {len(payload)} bytes to {self.topic}")
-            info = self.client.publish(self.topic, payload)
+            logger.debug(
+                f"Publishing {len(payload)} bytes to {publish_topic}")
+            info = self.client.publish(publish_topic, payload)
             info.wait_for_publish()
-            logger.debug(f"Data published successfully to {self.topic}")
+            logger.debug(
+                f"Data published successfully to {publish_topic}")
         except Exception as e:
             logger.error(f"Error publishing to MQTT: {e}")
 
