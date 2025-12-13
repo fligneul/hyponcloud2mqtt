@@ -75,12 +75,6 @@ def test_system_ids_from_env_var():
     del os.environ["SYSTEM_ID"]
 
 
-def test_system_id_backward_compatibility(tmp_path):
-    """Test backward compatibility with 'system_id' from a config file"""
-    config_file = tmp_path / "config.yaml"
-    config_file.write_text("system_id: '999'")
-    config = Config.load(str(config_file))
-    assert config.system_ids == ["999"]
 
 
 def test_empty_system_ids_raises_error(monkeypatch):

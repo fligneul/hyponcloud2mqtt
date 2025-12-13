@@ -88,11 +88,6 @@ class Config:
         if os.getenv("HTTP_URL"):
             config["http_url"] = os.getenv("HTTP_URL")
 
-        # Handle system_id for backwards compatibility from file
-        if 'system_id' in config:
-            if not config.get('system_ids'):  # Only use if system_ids is not set
-                config['system_ids'] = [config['system_id']]
-            del config['system_id']  # Remove old key
 
         # Env Var for system_ids (comma-separated)
         if os.getenv("SYSTEM_ID"):
