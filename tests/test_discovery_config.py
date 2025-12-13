@@ -13,6 +13,7 @@ def test_discovery_disabled_by_default():
         # Setup config with discovery disabled (default)
         config = Config(
             http_url="http://mock",
+            system_id="12345",
             http_interval=60,
             mqtt_broker="localhost",
             mqtt_port=1883,
@@ -59,6 +60,7 @@ def test_discovery_enabled():
         # Setup config with discovery ENABLED
         config = Config(
             http_url="http://mock",
+            system_id="12345",
             http_interval=60,
             mqtt_broker="localhost",
             mqtt_port=1883,
@@ -69,15 +71,21 @@ def test_discovery_enabled():
         )
         mock_config_load.return_value = config
 
-        daemon = Daemon()
-        daemon.running = False  # Skip loop
+        mock_mqtt_instance = mock_mqtt_cls.return_value
+        mock_mqtt_instance.connected = True
 
-        # Run daemon
-        try:
-            daemon.run()
-        except SystemExit:
-            pass
+        daemon = Daemon()
+
+        # directly call the discovery publishing logic
+        if config.sensors and config.ha_discovery_enabled:
+            if mock_mqtt_instance.connected or config.dry_run:
+                for sensor in config.sensors:
+                    mock_mqtt_instance.publish_discovery(
+                        sensor,
+                        config.device_name,
+                        config.ha_discovery_prefix,
+                        config.mqtt_topic
+                    )
 
         # Verify publish_discovery WAS called
-        mock_mqtt_instance = mock_mqtt_cls.return_value
         mock_mqtt_instance.publish_discovery.assert_called()

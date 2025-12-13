@@ -2,6 +2,7 @@ from __future__ import annotations
 # import pytest
 import pytest
 import responses
+from requests import Session
 from hyponcloud2mqtt.http_client import HttpClient, AuthenticationError
 
 
@@ -54,7 +55,7 @@ def test_fetch_data_with_valid_token():
         status=200
     )
 
-    client = HttpClient("http://api.example.com/monitor", "valid-token")
+    client = HttpClient(Session(), "http://api.example.com/monitor", "valid-token")
     data = client.fetch_data()
 
     assert data == {"code": 20000, "data": {"power_pv": 100}}
@@ -72,7 +73,7 @@ def test_fetch_data_expired_token():
         status=200
     )
 
-    client = HttpClient("http://api.example.com/monitor", "expired-token")
+    client = HttpClient(Session(), "http://api.example.com/monitor", "expired-token")
 
     with pytest.raises(AuthenticationError):
         client.fetch_data()
@@ -88,7 +89,7 @@ def test_fetch_data_without_token():
         status=200
     )
 
-    client = HttpClient("http://api.example.com/monitor", None)
+    client = HttpClient(Session(), "http://api.example.com/monitor", None)
 
     with pytest.raises(AuthenticationError):
         client.fetch_data()
@@ -141,7 +142,7 @@ def test_full_auth_flow():
     token = HttpClient.login("http://api.example.com", "user", "pass")
     assert token == "token-1"
 
-    client = HttpClient("http://api.example.com/data", token)
+    client = HttpClient(Session(), "http://api.example.com/data", token)
     data = client.fetch_data()
     assert data["data"]["value"] == 42
 
@@ -168,7 +169,7 @@ def test_fetch_data_generic_error():
         status=200
     )
 
-    client = HttpClient("http://api.example.com/monitor", "valid-token")
+    client = HttpClient(Session(), "http://api.example.com/monitor", "valid-token")
     data = client.fetch_data()
 
     assert data is None

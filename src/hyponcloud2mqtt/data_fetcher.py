@@ -1,6 +1,7 @@
 import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from requests import Session
 from .http_client import HttpClient, AuthenticationError
 from .data_merger import merge_api_data
 
@@ -15,6 +16,9 @@ class DataFetcher:
         self.monitor_client = None
         self.production_client = None
         self.status_client = None
+
+        self.session = Session()
+        self.session.verify = self.config.verify_ssl
 
         self.setup_clients()
 
@@ -38,13 +42,17 @@ class DataFetcher:
         plant_base_url = f"{self.base_url}/plant/{self.config.system_id}"
 
         self.monitor_client = HttpClient(
+            self.session,
             f"{plant_base_url}/monitor?refresh=true",
-            self.token,
-            self.config.verify_ssl)
+            self.token)
         self.production_client = HttpClient(
-            f"{plant_base_url}/production2", self.token, self.config.verify_ssl)
+            self.session,
+            f"{plant_base_url}/production2",
+            self.token)
         self.status_client = HttpClient(
-            f"{plant_base_url}/status", self.token, self.config.verify_ssl)
+            self.session,
+            f"{plant_base_url}/status",
+            self.token)
 
         logger.info("HTTP clients initialized for 3 endpoints")
 

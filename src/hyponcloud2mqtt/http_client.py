@@ -2,6 +2,8 @@ from __future__ import annotations
 import requests
 import logging
 from typing import Any
+from requests import Session
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +15,15 @@ class AuthenticationError(Exception):
 class HttpClient:
     def __init__(
             self,
+            session: Session,
             url: str,
-            token: str | None = None,
-            verify_ssl: bool = True):
+            token: str | None = None):
+        self.session = session
         self.url = url
         self.token = token
-        self.verify_ssl = verify_ssl
+        self.update_token(token)
         logger.debug(
-            f"Initialized HttpClient for {url} (SSL verification: {verify_ssl})")
+            f"Initialized HttpClient for {url}")
 
     @staticmethod
     def login(
@@ -81,19 +84,18 @@ class HttpClient:
             logger.error(f"Error parsing login response: {e}")
             return None
 
-    def update_token(self, token: str):
-        """Update the Bearer token for this client."""
+    def update_token(self, token: str | None):
+        """Update the Bearer token for this client's session."""
         self.token = token
+        if token:
+            self.session.headers["Authorization"] = f"Bearer {token}"
+        elif "Authorization" in self.session.headers:
+            del self.session.headers["Authorization"]
 
     def fetch_data(self) -> Any | None:
         logger.debug(f"Fetching data from {self.url}")
         try:
-            headers = {}
-            if self.token:
-                headers["Authorization"] = f"Bearer {self.token}"
-
-            response = requests.get(
-                self.url, headers=headers, timeout=10, verify=self.verify_ssl)
+            response = self.session.get(self.url, timeout=10)
             logger.debug(
                 f"Response received from {self.url}, status code: {response.status_code}")
             response.raise_for_status()
