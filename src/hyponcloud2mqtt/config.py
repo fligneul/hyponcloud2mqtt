@@ -90,8 +90,8 @@ class Config:
 
 
         # Env Var for system_ids (comma-separated)
-        if os.getenv("SYSTEM_ID"):
-            system_ids_str = os.getenv("SYSTEM_ID")
+        if os.getenv("SYSTEM_IDS"):
+            system_ids_str = os.getenv("SYSTEM_IDS")
             config["system_ids"] = [s.strip()
                                     for s in system_ids_str.split(',') if s.strip()]
 
