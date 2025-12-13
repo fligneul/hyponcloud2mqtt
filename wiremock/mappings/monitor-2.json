@@ -1,7 +1,7 @@
 {
     "request": {
         "method": "GET",
-        "urlPathPattern": "/plant/your_system_id_1/monitor",
+        "urlPathPattern": "/plant/your_system_id_2/monitor",
         "queryParameters": {
             "refresh": {
                 "equalTo": "true"
@@ -13,13 +13,13 @@
         "jsonBody": {
             "code": 20000,
             "data": {
-                "serial_number": "TEST123456",
+                "serial_number": "TEST654321",
                 "status": 1,
-                "battery_level": 85,
-                "battery_power": 1200,
-                "grid_power": 500,
-                "load_power": 2500,
-                "pv_power": 3200
+                "battery_level": 75,
+                "battery_power": 1100,
+                "grid_power": 600,
+                "load_power": 2600,
+                "pv_power": 3300
             },
             "message": "Success"
         },

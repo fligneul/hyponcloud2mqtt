@@ -1,0 +1,24 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/plant/your_system_id_2/production2"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "code": 20000,
+            "data": {
+                "today_generation": 16.5,
+                "month_generation": 460.2,
+                "year_generation": 5300.5,
+                "total_generation": 12600.0,
+                "co2_reduction": 8600.5,
+                "income": 1260.50
+            },
+            "message": "Success"
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

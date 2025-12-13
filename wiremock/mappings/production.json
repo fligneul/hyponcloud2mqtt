@@ -1,7 +1,7 @@
 {
     "request": {
         "method": "GET",
-        "url": "/production2"
+        "urlPathPattern": "/plant/your_system_id_1/production2"
     },
     "response": {
         "status": 200,
