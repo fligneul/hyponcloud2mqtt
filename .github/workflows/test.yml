@@ -25,6 +25,24 @@ jobs:
           -v "${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings" \
           wiremock/wiremock:latest
 
+    - name: Wait for Services
+      run: |
+        echo "Waiting for Mosquitto..."
+        timeout 30 sh -c 'until nc -z localhost 1883; do sleep 1; done'
+        echo "Mosquitto is up!"
+
+        echo "Waiting for WireMock..."
+        timeout 30 sh -c 'until curl -s http://localhost:8080/__admin/mappings; do sleep 1; done'
+        echo "WireMock is up!"
+
+    - name: Dump Docker Logs
+      if: always()
+      run: |
+        echo "=== Mosquitto Logs ==="
+        docker logs mosquitto || true
+        echo "=== WireMock Logs ==="
+        docker logs wiremock || true
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
