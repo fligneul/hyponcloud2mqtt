@@ -8,25 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
-
-    services:
-      wiremock:
-        image: wiremock/wiremock:latest
-        ports:
-          - 8080:8080
-        volumes:
-          - ${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings
-
-      mosquitto:
-        image: eclipse-mosquitto:2
-        ports:
-          - 1883:1883
-        volumes:
-          - ${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Start Services (Mosquitto & Wiremock)
+      run: |
+        # Start Mosquitto
+        docker run -d --name mosquitto -p 1883:1883 \
+          -v "${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf" \
+          eclipse-mosquitto:2
+
+        # Start Wiremock
+        docker run -d --name wiremock -p 8080:8080 \
+          -v "${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings" \
+          wiremock/wiremock:latest
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
