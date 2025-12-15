@@ -1,4 +1,3 @@
-# import pytest
 from unittest.mock import MagicMock, patch
 from hyponcloud2mqtt.http_client import HttpClient
 from hyponcloud2mqtt.mqtt_client import MqttClient
