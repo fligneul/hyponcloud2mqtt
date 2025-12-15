@@ -10,7 +10,6 @@ from .config import Config
 from .mqtt_client import MqttClient
 from .health_server import HealthServer, HealthContext, HealthHTTPHandler
 from .data_fetcher import DataFetcher
-from .http_client import HttpClient
 
 # Configure logging
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -22,10 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class Daemon:
-    def __init__(self, config: Config | None = None, http_client: HttpClient = None):
+    def __init__(self, config: Config | None = None):
         self.running = True
         self.config = config
-        self.http_client = http_client
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
@@ -114,7 +112,7 @@ class Daemon:
                     "Skipping Home Assistant discovery: MQTT not connected")
 
         # Initialize Data Fetchers for each system ID
-        data_fetchers = [DataFetcher(config, system_id, self.http_client)
+        data_fetchers = [DataFetcher(config, system_id)
                          for system_id in config.system_ids]
         logger.info(
             f"Initialized {len(data_fetchers)} data fetchers for system IDs: {config.system_ids}")
