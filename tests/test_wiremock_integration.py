@@ -55,7 +55,7 @@ def test_daemon_fetches_and_publishes_data(test_config):
 
     # We need to patch the signal handler to prevent the test from exiting
     # prematurely
-    with patch("signal.signal") as mock_signal:
+    with patch("signal.signal"):
         # We also need to disable the health server to avoid port conflicts
         # with wiremock
         test_config.health_server_enabled = False

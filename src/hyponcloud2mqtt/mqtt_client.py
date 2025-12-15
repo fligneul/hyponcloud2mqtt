@@ -119,8 +119,7 @@ class MqttClient:
         if not self.dry_run and self.connected:
             try:
                 logger.debug(
-                    f"Publishing 'offline' to {
-                        self.availability_topic}")
+                    f"Publishing 'offline' to {self.availability_topic}")
                 info = self.client.publish(
                     self.availability_topic, "offline", retain=True)
                 # Wait for the message to be published (with timeout to not
