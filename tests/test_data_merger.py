@@ -1,5 +1,4 @@
 from __future__ import annotations
-# import pytest
 from hyponcloud2mqtt.data_merger import merge_api_data
 
 

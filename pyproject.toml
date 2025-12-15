@@ -25,6 +25,8 @@ dev = [
     "responses",
     "flake8",
     "mypy",
+    "types-requests",
+    "types-PyYAML",
 ]
 
 [tool.pytest.ini_options]

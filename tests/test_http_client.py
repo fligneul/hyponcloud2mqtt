@@ -1,5 +1,4 @@
 from __future__ import annotations
-# import pytest
 import pytest
 import responses
 from hyponcloud2mqtt.http_client import HttpClient, AuthenticationError

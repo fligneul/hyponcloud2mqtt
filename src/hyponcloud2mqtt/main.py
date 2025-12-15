@@ -31,7 +31,7 @@ class Daemon:
         logger.info(f"Received signal {signum}, stopping...")
         self.running = False
 
-    def run(self):
+    def run(self):  # noqa: C901
         if self.config:
             config = self.config
         else:
@@ -56,20 +56,21 @@ class Daemon:
         )
 
         # Start Health Server
-        health_context = HealthContext(mqtt_client)
-        health_server = HealthServer(
-            ('0.0.0.0', 8080), HealthHTTPHandler, health_context)
-        health_thread = threading.Thread(
-            target=health_server.serve_forever, daemon=True)
-        health_thread.start()
-        logger.info("Health check server started on port 8080")
+        if config.health_server_enabled:
+            health_context = HealthContext(mqtt_client)
+            health_server = HealthServer(
+                ('0.0.0.0', 8080), HealthHTTPHandler, health_context)
+            health_thread = threading.Thread(
+                target=health_server.serve_forever, daemon=True)
+            health_thread.start()
+            logger.info("Health check server started on port 8080")
 
         # Connect to MQTT (with retry logic if not in dry run mode)
         if not config.dry_run:
             # Retry connection with exponential backoff
             retry_delay = 5
             max_retry_delay = 60
-            
+
             while self.running:
                 if mqtt_client.connect(timeout=10):
                     logger.info("Successfully connected to MQTT broker")
@@ -80,13 +81,14 @@ class Daemon:
                     # Sleep in short intervals to respond to signals
                     for _ in range(retry_delay):
                         if not self.running:
-                            logger.info("Stopping before MQTT connection established")
+                            logger.info(
+                                "Stopping before MQTT connection established")
                             sys.exit(0)
                         time.sleep(1)
-                    
+
                     # Exponential backoff
                     retry_delay = min(retry_delay * 2, max_retry_delay)
-            
+
             if not self.running:
                 sys.exit(0)
         else:
@@ -123,7 +125,7 @@ class Daemon:
                     "MQTT disconnected, attempting to reconnect...")
                 retry_delay = 5
                 max_retry_delay = 60
-                
+
                 while self.running and not mqtt_client.connected:
                     if mqtt_client.connect(timeout=10):
                         logger.info("Reconnected to MQTT broker")
@@ -136,13 +138,13 @@ class Daemon:
                             if not self.running:
                                 break
                             time.sleep(1)
-                        
+
                         # Exponential backoff
                         retry_delay = min(retry_delay * 2, max_retry_delay)
-                
+
                 if not self.running:
                     break
-            
+
             logger.debug(
                 f"Starting fetch cycle (interval: {config.http_interval}s)")
 

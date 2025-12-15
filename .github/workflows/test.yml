@@ -1,20 +1,48 @@
 name: Test
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Start Services (Mosquitto & Wiremock)
+      run: |
+        # Start Mosquitto
+        docker run -d --name mosquitto -p 1883:1883 \
+          -v "${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf" \
+          eclipse-mosquitto:2
+
+        # Start Wiremock
+        docker run -d --name wiremock -p 8080:8080 \
+          -v "${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings" \
+          wiremock/wiremock:latest
+
+    - name: Wait for Services
+      run: |
+        echo "Waiting for Mosquitto..."
+        timeout 30 sh -c 'until nc -z 127.0.0.1 1883; do sleep 1; done'
+        echo "Mosquitto is up!"
+
+        echo "Waiting for WireMock..."
+        timeout 30 sh -c 'until curl -s http://127.0.0.1:8080/__admin/mappings; do sleep 1; done'
+        echo "WireMock is up!"
+
+    - name: Dump Docker Logs
+      if: always()
+      run: |
+        echo "=== Mosquitto Logs ==="
+        docker logs mosquitto || true
+        echo "=== WireMock Logs ==="
+        docker logs wiremock || true
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -25,16 +53,20 @@ jobs:
         pip install ".[dev]"
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+        flake8 .
     - name: Type check with mypy
       run: |
         mypy src
     - name: Test with pytest
+      env:
+        HTTP_URL: "http://127.0.0.1:8080"
+        MQTT_BROKER: "127.0.0.1"
+        MQTT_PORT: "1883"
+        SYSTEM_IDS: "your_system_id_1"
+        API_USERNAME: "test_user"
+        API_PASSWORD: "test_password"
       run: |
-        pytest
+        pytest -v -rs
 
   build:
     runs-on: ubuntu-latest

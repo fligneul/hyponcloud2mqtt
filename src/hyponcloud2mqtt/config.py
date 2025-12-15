@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import logging
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +38,13 @@ class Config:
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
     sensors: List[SensorConfig] = field(default_factory=list)
+    health_server_enabled: bool = True
 
     @classmethod
-    def load(cls, config_path: str | None = None) -> "Config":
+    def load(cls, config_path: str | None = None) -> "Config":  # noqa: C901
         # Defaults
-        config = {
-            "http_url": "https://httpbin.org/get",  # Dummy URL as requested
+        config: dict[str, Any] = {
+            "http_url": "https://127.0.0.1:8080",
             "system_ids": [],  # Required, no default
             "http_interval": 60,
             "mqtt_broker": "localhost",
@@ -88,34 +89,35 @@ class Config:
         if os.getenv("HTTP_URL"):
             config["http_url"] = os.getenv("HTTP_URL")
 
-
         # Env Var for system_ids (comma-separated)
-        if os.getenv("SYSTEM_IDS"):
-            system_ids_str = os.getenv("SYSTEM_IDS")
+        system_ids_env = os.getenv("SYSTEM_IDS")
+        if system_ids_env:
             config["system_ids"] = [s.strip()
-                                    for s in system_ids_str.split(',') if s.strip()]
+                                    for s in system_ids_env.split(',') if s.strip()]
 
-        if os.getenv("HTTP_INTERVAL"):
+        http_interval_env = os.getenv("HTTP_INTERVAL")
+        if http_interval_env:
             try:
-                config["http_interval"] = int(os.getenv("HTTP_INTERVAL"))
+                config["http_interval"] = int(http_interval_env)
             except ValueError:
                 pass
 
         if os.getenv("MQTT_BROKER"):
             config["mqtt_broker"] = os.getenv("MQTT_BROKER")
 
-        if os.getenv("MQTT_PORT"):
+        mqtt_port_env = os.getenv("MQTT_PORT")
+        if mqtt_port_env:
             try:
-                config["mqtt_port"] = int(os.getenv("MQTT_PORT"))
+                config["mqtt_port"] = int(mqtt_port_env)
             except ValueError:
                 pass
 
         if os.getenv("MQTT_TOPIC"):
             config["mqtt_topic"] = os.getenv("MQTT_TOPIC")
 
-        if os.getenv("MQTT_AVAILABILITY_TOPIC"):
-            config["mqtt_availability_topic"] = os.getenv(
-                "MQTT_AVAILABILITY_TOPIC")
+        mqtt_availability_topic_env = os.getenv("MQTT_AVAILABILITY_TOPIC")
+        if mqtt_availability_topic_env:
+            config["mqtt_availability_topic"] = mqtt_availability_topic_env
 
         # Default availability topic if not set
         if not config.get("mqtt_availability_topic"):
@@ -127,13 +129,13 @@ class Config:
         if os.getenv("MQTT_PASSWORD"):
             config["mqtt_password"] = os.getenv("MQTT_PASSWORD")
 
-        if os.getenv("MQTT_TLS_ENABLED"):
-            config["mqtt_tls_enabled"] = os.getenv(
-                "MQTT_TLS_ENABLED").lower() in ("true", "1", "yes")
+        mqtt_tls_enabled_env = os.getenv("MQTT_TLS_ENABLED")
+        if mqtt_tls_enabled_env:
+            config["mqtt_tls_enabled"] = mqtt_tls_enabled_env.lower() in ("true", "1", "yes")
 
-        if os.getenv("MQTT_TLS_INSECURE"):
-            config["mqtt_tls_insecure"] = os.getenv(
-                "MQTT_TLS_INSECURE").lower() in ("true", "1", "yes")
+        mqtt_tls_insecure_env = os.getenv("MQTT_TLS_INSECURE")
+        if mqtt_tls_insecure_env:
+            config["mqtt_tls_insecure"] = mqtt_tls_insecure_env.lower() in ("true", "1", "yes")
 
         if os.getenv("MQTT_CA_PATH"):
             config["mqtt_ca_path"] = os.getenv("MQTT_CA_PATH")
@@ -150,17 +152,17 @@ class Config:
         if os.getenv("DEVICE_NAME"):
             config["device_name"] = os.getenv("DEVICE_NAME")
 
-        if os.getenv("VERIFY_SSL"):
-            config["verify_ssl"] = os.getenv(
-                "VERIFY_SSL").lower() in ("true", "1", "yes")
+        verify_ssl_env = os.getenv("VERIFY_SSL")
+        if verify_ssl_env:
+            config["verify_ssl"] = verify_ssl_env.lower() in ("true", "1", "yes")
 
-        if os.getenv("DRY_RUN"):
-            config["dry_run"] = os.getenv(
-                "DRY_RUN").lower() in ("true", "1", "yes")
+        dry_run_env = os.getenv("DRY_RUN")
+        if dry_run_env:
+            config["dry_run"] = dry_run_env.lower() in ("true", "1", "yes")
 
-        if os.getenv("HA_DISCOVERY_ENABLED"):
-            config["ha_discovery_enabled"] = os.getenv(
-                "HA_DISCOVERY_ENABLED").lower() in ("true", "1", "yes")
+        ha_discovery_enabled_env = os.getenv("HA_DISCOVERY_ENABLED")
+        if ha_discovery_enabled_env:
+            config["ha_discovery_enabled"] = ha_discovery_enabled_env.lower() in ("true", "1", "yes")
 
         # Parse sensors from config file (already loaded in config dict)
         # Convert dicts to SensorConfig objects
@@ -187,7 +189,7 @@ class Config:
         return cls(**config)
 
     @staticmethod
-    def _validate_config(config: dict) -> None:
+    def _validate_config(config: dict[str, Any]) -> None:  # noqa: C901
         """Validate configuration values for security and correctness."""
         # Validate HTTP URL
         http_url = config.get("http_url", "")
@@ -247,4 +249,3 @@ class Config:
         if mqtt_password and not mqtt_username:
             logger.warning(
                 "MQTT password provided without username - authentication may fail")
-
