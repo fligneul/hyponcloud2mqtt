@@ -57,12 +57,6 @@ jobs:
     - name: Type check with mypy
       run: |
         mypy src
-    - name: Debug Env Vars
-      env:
-        HTTP_URL: "http://127.0.0.1:8080"
-      run: |
-        python -c "import os; print('DEBUG_STEP: HTTP_URL=', os.environ.get('HTTP_URL'))"
-
     - name: Test with pytest
       env:
         HTTP_URL: "http://127.0.0.1:8080"
@@ -72,7 +66,7 @@ jobs:
         API_USERNAME: "test_user"
         API_PASSWORD: "test_password"
       run: |
-        pytest -v -rs -s
+        pytest -v -rs
 
   build:
     runs-on: ubuntu-latest

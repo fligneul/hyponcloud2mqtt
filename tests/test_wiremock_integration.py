@@ -19,7 +19,6 @@ def test_config():
     Skips the test if the required environment variables are not set.
     """
     if not os.getenv("HTTP_URL"):
-        print(f"DEBUG: Available Env Vars: {list(os.environ.keys())}")
         pytest.skip("Skipping integration test: HTTP_URL not set")
 
     return Config.load()
