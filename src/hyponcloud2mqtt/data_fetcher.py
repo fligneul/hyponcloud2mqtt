@@ -8,8 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class DataFetcher:
-    def __init__(self, config):
+    def __init__(self, config, system_id: str):
         self.config = config
+        self.system_id = system_id
         self.base_url = config.http_url.rstrip('/')
         self.token = None
         self.monitor_client = None
@@ -35,7 +36,7 @@ class DataFetcher:
             logger.warning("No API credentials provided")
 
         # Construct plant-specific base URL
-        plant_base_url = f"{self.base_url}/plant/{self.config.system_id}"
+        plant_base_url = f"{self.base_url}/plant/{self.system_id}"
 
         self.monitor_client = HttpClient(
             f"{plant_base_url}/monitor?refresh=true",

@@ -36,6 +36,7 @@ docker run -d \
   --name hyponcloud2mqtt \
   --restart unless-stopped \
   -e HTTP_URL="http://192.168.1.100" \
+  -e SYSTEM_IDS="12345,67890" \
   -e API_USERNAME="your_username" \
   -e API_PASSWORD="your_password" \
   -e MQTT_BROKER="192.168.1.10" \
@@ -74,6 +75,7 @@ Configuration can be provided via **environment variables** or a **YAML config f
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `HTTP_URL` | Yes | - | Base URL of the API (e.g., `http://192.168.1.100`) |
+| `SYSTEM_IDS` | Yes | - | Comma-separated list of system IDs to monitor |
 | `API_USERNAME` | Yes | - | API username for authentication |
 | `API_PASSWORD` | Yes | - | API password for authentication |
 | `HTTP_INTERVAL` | No | `60` | Fetch interval in seconds |

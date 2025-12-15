@@ -19,7 +19,7 @@ class SensorConfig:
 @dataclass
 class Config:
     http_url: str
-    system_id: str
+    system_ids: List[str]
     http_interval: int
     mqtt_broker: str
     mqtt_port: int
@@ -44,7 +44,7 @@ class Config:
         # Defaults
         config = {
             "http_url": "https://httpbin.org/get",  # Dummy URL as requested
-            "system_id": "",  # Required, no default
+            "system_ids": [],  # Required, no default
             "http_interval": 60,
             "mqtt_broker": "localhost",
             "mqtt_port": 1883,
@@ -88,8 +88,12 @@ class Config:
         if os.getenv("HTTP_URL"):
             config["http_url"] = os.getenv("HTTP_URL")
 
-        if os.getenv("SYSTEM_ID"):
-            config["system_id"] = os.getenv("SYSTEM_ID")
+
+        # Env Var for system_ids (comma-separated)
+        if os.getenv("SYSTEM_IDS"):
+            system_ids_str = os.getenv("SYSTEM_IDS")
+            config["system_ids"] = [s.strip()
+                                    for s in system_ids_str.split(',') if s.strip()]
 
         if os.getenv("HTTP_INTERVAL"):
             try:
@@ -193,10 +197,14 @@ class Config:
             raise ValueError(
                 f"http_url must start with http:// or https://, got: {http_url}")
 
-        # Validate system_id
-        system_id = config.get("system_id", "")
-        if not system_id:
-            raise ValueError("system_id is required")
+        # Validate system_ids
+        system_ids = config.get("system_ids", [])
+        if not isinstance(system_ids, list) or not system_ids:
+            raise ValueError("system_ids must be a non-empty list")
+
+        # Ensure all IDs are strings
+        if not all(isinstance(s, str) for s in system_ids):
+            raise ValueError("All elements in system_ids must be strings")
 
         # Validate HTTP interval
         http_interval = config.get("http_interval", 0)
