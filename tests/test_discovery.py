@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from hyponcloud2mqtt.config import Config, SensorConfig
 from hyponcloud2mqtt.main import Daemon
 

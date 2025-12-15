@@ -41,10 +41,10 @@ class Config:
     health_server_enabled: bool = True
 
     @classmethod
-    def load(cls, config_path: str | None = None) -> "Config":
+    def load(cls, config_path: str | None = None) -> "Config":  # noqa: C901
         # Defaults
         config = {
-            "http_url": "https://httpbin.org/get",  # Dummy URL as requested
+            "http_url": "https://127.0.0.1:8080",
             "system_ids": [],  # Required, no default
             "http_interval": 60,
             "mqtt_broker": "localhost",
@@ -188,7 +188,7 @@ class Config:
         return cls(**config)
 
     @staticmethod
-    def _validate_config(config: dict) -> None:
+    def _validate_config(config: dict) -> None:  # noqa: C901
         """Validate configuration values for security and correctness."""
         # Validate HTTP URL
         http_url = config.get("http_url", "")

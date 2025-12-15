@@ -31,7 +31,7 @@ class Daemon:
         logger.info(f"Received signal {signum}, stopping...")
         self.running = False
 
-    def run(self):
+    def run(self):  # noqa: C901
         if self.config:
             config = self.config
         else:
