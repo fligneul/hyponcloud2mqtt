@@ -6,6 +6,7 @@ services:
     environment:
       # Point to WireMock
       HTTP_URL: "http://wiremock:8080"
+      SYSTEM_IDS: "your_system_id_1,your_system_id_2"
       API_USERNAME: "test_user"
       API_PASSWORD: "test_password"
       HTTP_INTERVAL: "10" # Faster interval for testing

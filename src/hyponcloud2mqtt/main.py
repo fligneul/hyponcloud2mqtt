@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class Daemon:
-    def __init__(self):
+    def __init__(self, config: Config | None = None):
         self.running = True
+        self.config = config
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
@@ -31,12 +32,16 @@ class Daemon:
         self.running = False
 
     def run(self):
-        config_path = os.getenv("CONFIG_FILE", "config.yaml")
-        try:
-            config = Config.load(config_path)
-        except Exception as e:
-            logger.critical(f"Configuration error: {e}")
-            sys.exit(1)
+        if self.config:
+            config = self.config
+        else:
+            config_path = os.getenv("CONFIG_FILE", "config.yaml")
+            try:
+                config = Config.load(config_path)
+            except Exception as e:
+                logger.critical(f"Configuration error: {e}")
+                sys.exit(1)
+
         mqtt_client = MqttClient(
             config.mqtt_broker,
             config.mqtt_port,
@@ -105,8 +110,11 @@ class Daemon:
                 logger.warning(
                     "Skipping Home Assistant discovery: MQTT not connected")
 
-        # Initialize Data Fetcher
-        data_fetcher = DataFetcher(config)
+        # Initialize Data Fetchers for each system ID
+        data_fetchers = [DataFetcher(config, system_id)
+                         for system_id in config.system_ids]
+        logger.info(
+            f"Initialized {len(data_fetchers)} data fetchers for system IDs: {config.system_ids}")
 
         while self.running:
             # Check MQTT connection before fetching (unless in dry run mode)
@@ -138,16 +146,29 @@ class Daemon:
             logger.debug(
                 f"Starting fetch cycle (interval: {config.http_interval}s)")
 
-            # Fetch and Merge Data
-            merged_data = data_fetcher.fetch_all()
+            for fetcher in data_fetchers:
+                if not self.running:
+                    break
 
-            if merged_data:
-                logger.debug(f"Publishing merged data to {config.mqtt_topic}")
-                mqtt_client.publish(merged_data)
-                logger.info("Data published successfully")
-            else:
-                logger.warning(
-                    "No data to publish (all endpoints failed or returned empty)")
+                system_id = fetcher.system_id
+                logger.debug(f"Fetching data for system_id: {system_id}")
+
+                # Fetch and Merge Data
+                merged_data = fetcher.fetch_all()
+
+                # Construct topic for this system_id
+                # Append system_id to base topic
+                system_topic = f"{config.mqtt_topic}/{system_id}"
+
+                if merged_data:
+                    logger.debug(
+                        f"Publishing merged data for {system_id} to {system_topic}")
+                    mqtt_client.publish(merged_data, topic=system_topic)
+                    logger.info(
+                        f"Data for {system_id} published successfully")
+                else:
+                    logger.warning(
+                        f"No data to publish for system_id: {system_id} (endpoints failed or returned empty)")
 
             # Sleep in short intervals to respond to signals faster
             for _ in range(config.http_interval):
@@ -160,7 +181,14 @@ class Daemon:
 
 
 def main():
-    daemon = Daemon()
+    config_path = os.getenv("CONFIG_FILE", "config.yaml")
+    try:
+        config = Config.load(config_path)
+    except Exception as e:
+        logger.critical(f"Configuration error: {e}")
+        sys.exit(1)
+
+    daemon = Daemon(config)
     daemon.run()
 
 
