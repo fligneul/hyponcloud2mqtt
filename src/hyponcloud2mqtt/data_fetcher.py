@@ -1,6 +1,7 @@
 import logging
 import sys
 import requests
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .http_client import HttpClient, AuthenticationError
 from .data_merger import merge_api_data
@@ -18,6 +19,7 @@ class DataFetcher:
         self.monitor_client = None
         self.production_client = None
         self.status_client = None
+        self._reauth_lock = threading.Lock()
 
         self.setup_clients()
 
@@ -130,17 +132,19 @@ class DataFetcher:
                 logger.warning(
                     f"Authentication failed during fetch (attempt {attempt + 1}/{max_retries})")
                 if attempt < max_retries - 1:
-                    logger.info("Attempting to re-login...")
-                    new_token = self._login()
-                    if new_token:
-                        logger.info(
-                            "Successfully re-authenticated, updating session token")
-                        self.session.headers.update(
-                            {"Authorization": f"Bearer {new_token}"})
-                        continue  # Retry the loop
-                    else:
-                        logger.error("Re-authentication failed")
-                        break  # Stop retrying
+                    # Use a lock to prevent multiple threads from trying to re-login at once
+                    with self._reauth_lock:
+                        logger.info("Attempting to re-login...")
+                        new_token = self._login()
+                        if new_token:
+                            logger.info(
+                                "Successfully re-authenticated, updating session token")
+                            self.session.headers.update(
+                                {"Authorization": f"Bearer {new_token}"})
+                            continue  # Retry the loop
+                        else:
+                            logger.error("Re-authentication failed")
+                            break  # Stop retrying
                 else:
                     logger.error("Max retries reached for authentication")
             except Exception as e:
