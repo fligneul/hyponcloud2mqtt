@@ -11,17 +11,29 @@
     "response": {
         "status": 200,
         "jsonBody": {
-            "code": 20000,
             "data": {
-                "serial_number": "TEST654321",
-                "status": 1,
-                "battery_level": 75,
-                "battery_power": 1100,
-                "grid_power": 600,
-                "load_power": 2600,
-                "pv_power": 3300
+                "monetary": "USD",
+                "today_earning": 10.5,
+                "month_earning": 150.2,
+                "total_earning": 4500.0,
+                "e_total": 1200.50,
+                "e_month": 350.5,
+                "e_today": 25.5,
+                "e_year": 3800.0,
+                "total_tree": 12.5,
+                "total_co2": 250.5,
+                "total_diesel": 850.0,
+                "percent": 45,
+                "meter_power": 500,
+                "power_load": 1200,
+                "w_cha": 500,
+                "power_pv": 3500,
+                "soc": 85,
+                "micro": 1
             },
-            "message": "Success"
+            "message": "ok",
+            "time": 1765707000,
+            "code": 20000
         },
         "headers": {
             "Content-Type": "application/json"

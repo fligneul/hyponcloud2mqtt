@@ -6,16 +6,21 @@
     "response": {
         "status": 200,
         "jsonBody": {
-            "code": 20000,
             "data": {
-                "today_generation": 15.5,
-                "month_generation": 450.2,
-                "year_generation": 5200.5,
-                "total_generation": 12500.0,
-                "co2_reduction": 8500.5,
-                "income": 1250.50
+                "today_generation": 0,
+                "month_generation": 1.02,
+                "year_generation": 95.35,
+                "total_generation": 95.35,
+                "co2": 2.86,
+                "tree": 0.16,
+                "diesel": 10.59,
+                "today_revenue": 0,
+                "month_revenue": 0.17,
+                "total_revenue": 16.32
             },
-            "message": "Success"
+            "message": "ok",
+            "time": 1765706367,
+            "code": 20000
         },
         "headers": {
             "Content-Type": "application/json"

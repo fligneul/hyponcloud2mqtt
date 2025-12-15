@@ -6,14 +6,41 @@
     "response": {
         "status": 200,
         "jsonBody": {
-            "code": 20000,
             "data": {
-                "device_status": "Normal",
-                "connection_status": "Online",
-                "last_update": "2023-10-27T10:00:00Z",
-                "firmware_version": "V1.0.0"
+                "gateway": {
+                    "online": 1,
+                    "offline": 0
+                },
+                "inverter": {
+                    "online": 1,
+                    "normal": 1,
+                    "offline": 0,
+                    "fault": 0,
+                    "wait": 0
+                },
+                "battery": {
+                    "count": 0,
+                    "sleep": 0,
+                    "charge": 0,
+                    "discharge": 0,
+                    "idle": 0,
+                    "standby": 0,
+                    "run": 0,
+                    "fault": 0,
+                    "offline": 0
+                },
+                "meter": 0,
+                "ev": 0,
+                "him_gateway": {
+                    "online": 0,
+                    "offline": 0
+                },
+                "him": 0,
+                "event": 0
             },
-            "message": "Success"
+            "message": "ok",
+            "time": 1765706367,
+            "code": 20000
         },
         "headers": {
             "Content-Type": "application/json"
