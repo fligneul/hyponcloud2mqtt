@@ -45,8 +45,8 @@ def test_daemon_fetches_and_publishes_data(test_config):
 
     try:
         mqtt_client.connect(test_config.mqtt_broker, test_config.mqtt_port, 60)
-    except (ConnectionRefusedError, OSError):
-        pytest.skip("MQTT broker not running on localhost")
+    except (ConnectionRefusedError, OSError) as e:
+        pytest.skip(f"MQTT broker not running on {test_config.mqtt_broker}:{test_config.mqtt_port}: {e}")
 
     mqtt_client.subscribe(topic)
 
