@@ -68,7 +68,7 @@ class MqttClient:
         else:
             self.connected = False
             logger.error(f"Failed to connect to MQTT broker, return code {rc}")
-        
+
         # Signal connection attempt completed
         self._connection_result = rc
         self._connection_event.set()
@@ -80,20 +80,20 @@ class MqttClient:
 
     def connect(self, timeout: int = 10) -> bool:
         """Connect to MQTT broker and wait for connection to succeed or fail.
-        
+
         Args:
             timeout: Maximum seconds to wait for connection (default: 10)
-            
+
         Returns:
             True if connected successfully, False otherwise
         """
         logger.info(
             f"Connecting to MQTT broker at {self.broker}:{self.port}...")
-        
+
         # Reset connection event
         self._connection_event.clear()
         self._connection_result = None
-        
+
         try:
             self.client.connect(self.broker, self.port, 60)
             self.client.loop_start()
@@ -101,7 +101,7 @@ class MqttClient:
         except Exception as e:
             logger.error(f"Error connecting to MQTT broker: {e}")
             return False
-        
+
         # Wait for connection callback
         if self._connection_event.wait(timeout):
             # Connection attempt completed
@@ -118,14 +118,18 @@ class MqttClient:
     def disconnect(self):
         if not self.dry_run and self.connected:
             try:
-                logger.debug(f"Publishing 'offline' to {self.availability_topic}")
-                info = self.client.publish(self.availability_topic, "offline", retain=True)
-                # Wait for the message to be published (with timeout to not block shutdown)
+                logger.debug(
+                    f"Publishing 'offline' to {
+                        self.availability_topic}")
+                info = self.client.publish(
+                    self.availability_topic, "offline", retain=True)
+                # Wait for the message to be published (with timeout to not
+                # block shutdown)
                 info.wait_for_publish(timeout=2.0)
                 logger.debug("Offline status published successfully")
             except Exception as e:
                 logger.warning(f"Failed to publish offline status: {e}")
-        
+
         logger.info("Disconnecting from MQTT broker...")
         self.client.loop_stop()
         self.client.disconnect()

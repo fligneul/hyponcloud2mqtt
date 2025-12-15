@@ -8,7 +8,8 @@ from hyponcloud2mqtt.main import Daemon
 @patch('hyponcloud2mqtt.main.DataFetcher')
 @patch('hyponcloud2mqtt.main.HealthServer')
 @patch('hyponcloud2mqtt.main.Config.load')
-def test_discovery_disabled(mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
+def test_discovery_disabled(
+        mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that no discovery messages are published when discovery is disabled."""
     # Arrange
     config = Config(
@@ -20,7 +21,11 @@ def test_discovery_disabled(mock_config_load, mock_health_server, mock_data_fetc
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=False,
-        sensors=[SensorConfig(name="test", unique_id="test", value_template="test")]
+        sensors=[
+            SensorConfig(
+                name="test",
+                unique_id="test",
+                value_template="test")]
     )
     mock_config_load.return_value = config
     mock_mqtt_instance = mock_mqtt_client.return_value
@@ -35,7 +40,6 @@ def test_discovery_disabled(mock_config_load, mock_health_server, mock_data_fetc
     except SystemExit as e:
         assert e.code == 0
 
-
     # Assert
     mock_mqtt_instance.publish_discovery.assert_not_called()
 
@@ -44,7 +48,8 @@ def test_discovery_disabled(mock_config_load, mock_health_server, mock_data_fetc
 @patch('hyponcloud2mqtt.main.DataFetcher')
 @patch('hyponcloud2mqtt.main.HealthServer')
 @patch('hyponcloud2mqtt.main.Config.load')
-def test_discovery_enabled(mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
+def test_discovery_enabled(
+        mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that discovery messages are published when discovery is enabled."""
     # Arrange
     config = Config(
@@ -56,7 +61,11 @@ def test_discovery_enabled(mock_config_load, mock_health_server, mock_data_fetch
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=True,
-        sensors=[SensorConfig(name="test", unique_id="test", value_template="test")],
+        sensors=[
+            SensorConfig(
+                name="test",
+                unique_id="test",
+                value_template="test")],
         dry_run=False
     )
     mock_config_load.return_value = config

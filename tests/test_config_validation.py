@@ -2,8 +2,6 @@ import pytest
 from hyponcloud2mqtt.config import Config
 
 
-
-
 def test_validation_invalid_http_url(monkeypatch):
     """Test that invalid HTTP URLs are rejected"""
     import os
@@ -73,8 +71,6 @@ def test_system_ids_from_env_var():
     config = Config.load()
     assert config.system_ids == ["123", "456", "789"]
     del os.environ["SYSTEM_IDS"]
-
-
 
 
 def test_empty_system_ids_raises_error(monkeypatch):

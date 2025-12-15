@@ -70,7 +70,7 @@ class Daemon:
             # Retry connection with exponential backoff
             retry_delay = 5
             max_retry_delay = 60
-            
+
             while self.running:
                 if mqtt_client.connect(timeout=10):
                     logger.info("Successfully connected to MQTT broker")
@@ -81,13 +81,14 @@ class Daemon:
                     # Sleep in short intervals to respond to signals
                     for _ in range(retry_delay):
                         if not self.running:
-                            logger.info("Stopping before MQTT connection established")
+                            logger.info(
+                                "Stopping before MQTT connection established")
                             sys.exit(0)
                         time.sleep(1)
-                    
+
                     # Exponential backoff
                     retry_delay = min(retry_delay * 2, max_retry_delay)
-            
+
             if not self.running:
                 sys.exit(0)
         else:
@@ -124,7 +125,7 @@ class Daemon:
                     "MQTT disconnected, attempting to reconnect...")
                 retry_delay = 5
                 max_retry_delay = 60
-                
+
                 while self.running and not mqtt_client.connected:
                     if mqtt_client.connect(timeout=10):
                         logger.info("Reconnected to MQTT broker")
@@ -137,13 +138,13 @@ class Daemon:
                             if not self.running:
                                 break
                             time.sleep(1)
-                        
+
                         # Exponential backoff
                         retry_delay = min(retry_delay * 2, max_retry_delay)
-                
+
                 if not self.running:
                     break
-            
+
             logger.debug(
                 f"Starting fetch cycle (interval: {config.http_interval}s)")
 

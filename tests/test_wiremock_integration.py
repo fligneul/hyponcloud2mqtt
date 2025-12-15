@@ -11,6 +11,7 @@ from hyponcloud2mqtt.config import Config
 from hyponcloud2mqtt.data_merger import merge_api_data
 from hyponcloud2mqtt.main import Daemon
 
+
 @pytest.fixture
 def test_config():
     """
@@ -52,9 +53,11 @@ def test_daemon_fetches_and_publishes_data(test_config):
     # Start the MQTT client loop in a separate thread
     mqtt_client.loop_start()
 
-    # We need to patch the signal handler to prevent the test from exiting prematurely
+    # We need to patch the signal handler to prevent the test from exiting
+    # prematurely
     with patch("signal.signal") as mock_signal:
-        # We also need to disable the health server to avoid port conflicts with wiremock
+        # We also need to disable the health server to avoid port conflicts
+        # with wiremock
         test_config.health_server_enabled = False
         daemon = Daemon(test_config)
 

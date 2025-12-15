@@ -89,7 +89,6 @@ class Config:
         if os.getenv("HTTP_URL"):
             config["http_url"] = os.getenv("HTTP_URL")
 
-
         # Env Var for system_ids (comma-separated)
         if os.getenv("SYSTEM_IDS"):
             system_ids_str = os.getenv("SYSTEM_IDS")
@@ -120,7 +119,8 @@ class Config:
 
         # Default availability topic if not set
         if not config.get("mqtt_availability_topic"):
-            config["mqtt_availability_topic"] = f"{config['mqtt_topic']}/status"
+            config["mqtt_availability_topic"] = f"{
+                config['mqtt_topic']}/status"
 
         if os.getenv("MQTT_USERNAME"):
             config["mqtt_username"] = os.getenv("MQTT_USERNAME")
@@ -248,4 +248,3 @@ class Config:
         if mqtt_password and not mqtt_username:
             logger.warning(
                 "MQTT password provided without username - authentication may fail")
-
