@@ -38,6 +38,7 @@ class Config:
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
     sensors: List[SensorConfig] = field(default_factory=list)
+    health_server_enabled: bool = True
 
     @classmethod
     def load(cls, config_path: str | None = None) -> "Config":

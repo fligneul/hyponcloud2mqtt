@@ -25,6 +25,7 @@ dev = [
     "responses",
     "flake8",
     "mypy",
+    "pytest-docker",
 ]
 
 [tool.pytest.ini_options]

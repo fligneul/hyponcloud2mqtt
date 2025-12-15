@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataFetcher:
-    def __init__(self, config, system_id: str):
+    def __init__(self, config, system_id: str, http_client: HttpClient = None):
         self.config = config
         self.system_id = system_id
         self.base_url = config.http_url.rstrip('/')
@@ -16,10 +16,16 @@ class DataFetcher:
         self.monitor_client = None
         self.production_client = None
         self.status_client = None
+        self.http_client = http_client
 
         self.setup_clients()
 
     def setup_clients(self):
+        if self.http_client:
+            self.monitor_client = self.http_client
+            self.production_client = self.http_client
+            self.status_client = self.http_client
+            return
         # Login to get Bearer token
         if self.config.api_username and self.config.api_password:
             logger.info("Logging in to retrieve Bearer token...")

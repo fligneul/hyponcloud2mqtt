@@ -32,7 +32,7 @@ class MqttClient:
         self.connected = False
         self._connection_event = threading.Event()
         self._connection_result = None
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
         if username and password:
             self.client.username_pw_set(username, password)
@@ -57,7 +57,7 @@ class MqttClient:
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
 
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
             logger.info(
                 f"Connected to MQTT broker at {self.broker}:{self.port}")
@@ -73,7 +73,7 @@ class MqttClient:
         self._connection_result = rc
         self._connection_event.set()
 
-    def _on_disconnect(self, client, userdata, rc):
+    def _on_disconnect(self, client, userdata, flags, rc, properties=None):
         self.connected = False
         if rc != 0:
             logger.warning("Unexpected disconnection from MQTT broker")
