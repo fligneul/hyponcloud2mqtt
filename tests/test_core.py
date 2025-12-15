@@ -1,19 +1,37 @@
 from unittest.mock import MagicMock, patch
-from hyponcloud2mqtt.http_client import HttpClient
+import requests
+from hyponcloud2mqtt.http_client import HttpClient, AuthenticationError
 from hyponcloud2mqtt.mqtt_client import MqttClient
 
 
 def test_http_client_fetch_success():
-    with patch('requests.get') as mock_get:
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "code": 20000, "data": {"key": "value"}}
-        mock_get.return_value = mock_response
+    mock_session = MagicMock(spec=requests.Session)
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "code": 20000, "data": {"key": "value"}}
+    mock_response.raise_for_status.return_value = None
+    mock_session.get.return_value = mock_response
 
-        client = HttpClient("http://example.com", None)
-        data = client.fetch_data()
+    client = HttpClient("http://example.com", session=mock_session)
+    data = client.fetch_data()
 
-        assert data == {"code": 20000, "data": {"key": "value"}}
+    mock_session.get.assert_called_once_with("http://example.com", timeout=10)
+    assert data == {"code": 20000, "data": {"key": "value"}}
+
+
+def test_http_client_authentication_error():
+    mock_session = MagicMock(spec=requests.Session)
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"code": 50008}
+    mock_response.raise_for_status.return_value = None
+    mock_session.get.return_value = mock_response
+
+    client = HttpClient("http://example.com", session=mock_session)
+
+    with pytest.raises(AuthenticationError):
+        client.fetch_data()
+
+    mock_session.get.assert_called_once_with("http://example.com", timeout=10)
 
 
 def test_mqtt_client_publish():
