@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.dev.yml
+docker-compose.yml.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-cache/
+.tox/
+.pytest_cache/
+
+# Project
+.github/
+tests/
+wiremock/
+.env.example
+*.md
+.release-please-manifest.json
+release-please-config.json
