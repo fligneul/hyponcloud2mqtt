@@ -13,6 +13,21 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
 
+    services:
+      wiremock:
+        image: wiremock/wiremock:latest
+        ports:
+          - 8080:8080
+        volumes:
+          - ${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings
+
+      mosquitto:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+        volumes:
+          - ${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -23,8 +38,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install ".[dev]"
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -35,6 +48,13 @@ jobs:
       run: |
         mypy src
     - name: Test with pytest
+      env:
+        HTTP_URL: "http://localhost:8080"
+        MQTT_BROKER: "localhost"
+        MQTT_PORT: "1883"
+        SYSTEM_IDS: "your_system_id_1"
+        API_USERNAME: "test_user"
+        API_PASSWORD: "test_password"
       run: |
         pytest
 
