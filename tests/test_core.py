@@ -4,16 +4,18 @@ from hyponcloud2mqtt.mqtt_client import MqttClient
 
 
 def test_http_client_fetch_success():
-    with patch('requests.get') as mock_get:
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "code": 20000, "data": {"key": "value"}}
-        mock_get.return_value = mock_response
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "code": 20000, "data": {"key": "value"}}
+    mock_response.status_code = 200
+    mock_session.get.return_value = mock_response
 
-        client = HttpClient("http://example.com", None)
-        data = client.fetch_data()
+    client = HttpClient("http://example.com", mock_session)
+    data = client.fetch_data()
 
-        assert data == {"code": 20000, "data": {"key": "value"}}
+    assert data == {"code": 20000, "data": {"key": "value"}}
+    mock_session.get.assert_called_once()
 
 
 def test_mqtt_client_publish():
