@@ -131,21 +131,21 @@ class MqttClient:
         self.client.disconnect()
         logger.debug("MQTT client disconnected")
 
-    def publish(self, data: Any, topic: str | None = None):
+    def publish(self, data: Any, topic: str | None = None, retain: bool = False):
         """Publish data to a specific topic, or the default if not provided."""
         publish_topic = topic if topic is not None else self.topic
 
         if self.dry_run:
             payload = json.dumps(data, indent=2)
             logger.info(
-                f"[DRY RUN] Would publish to {publish_topic}:\n{payload}")
+                f"[DRY RUN] Would publish to {publish_topic} (retain={retain}):\n{payload}")
             return
 
         try:
             payload = json.dumps(data)
             logger.debug(
                 f"Publishing {len(payload)} bytes to {publish_topic}")
-            info = self.client.publish(publish_topic, payload)
+            info = self.client.publish(publish_topic, payload, retain=retain)
             info.wait_for_publish()
             logger.debug(
                 f"Data published successfully to {publish_topic}")
