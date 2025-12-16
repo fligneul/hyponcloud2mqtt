@@ -85,7 +85,7 @@ Configuration can be provided via **environment variables** or a **YAML config f
 | `MQTT_USERNAME` | No | - | MQTT username (optional) |
 | `MQTT_PASSWORD` | No | - | MQTT password (optional) |
 | `MQTT_AVAILABILITY_TOPIC` | No | `{MQTT_TOPIC}/status` | MQTT availability topic |
-| `HA_DISCOVERY_ENABLED` | No | `false` | Enable Home Assistant discovery |
+| `HA_DISCOVERY_ENABLED` | No | `true` | Enable Home Assistant discovery |
 | `HA_DISCOVERY_PREFIX` | No | `homeassistant` | Home Assistant discovery prefix |
 | `DEVICE_NAME` | No | `hyponcloud2mqtt` | Device name for Home Assistant |
 | `VERIFY_SSL` | No | `true` | Verify SSL certificates (set to `false` for self-signed certs) |
@@ -106,7 +106,6 @@ mqtt_broker: "localhost"
 mqtt_port: 1883
 mqtt_topic: "solar/inverter"
 
-ha_discovery_enabled: true
 ha_discovery_prefix: "homeassistant"
 device_name: "Solar Inverter"
 ```
@@ -356,7 +355,7 @@ If you see `code: 50008` errors:
 ### No Data in Home Assistant
 
 - Check MQTT topic in Home Assistant MQTT integration
-- Verify `HA_DISCOVERY_ENABLED` is set to `true` (default: `false`)
+- Verify `HA_DISCOVERY_ENABLED` is not set to `false` (default: `true`)
 - Verify `HA_DISCOVERY_PREFIX` matches Home Assistant config (default: `homeassistant`)
 - Check Home Assistant logs for discovery messages
 

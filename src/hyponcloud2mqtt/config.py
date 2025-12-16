@@ -25,7 +25,7 @@ class Config:
     mqtt_tls_insecure: bool = False
     mqtt_ca_path: str | None = None
     dry_run: bool = False
-    ha_discovery_enabled: bool = False
+    ha_discovery_enabled: bool = True
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
     health_server_enabled: bool = True
@@ -51,7 +51,7 @@ class Config:
             "api_password": None,
             "verify_ssl": True,
             "dry_run": False,
-            "ha_discovery_enabled": False,
+            "ha_discovery_enabled": True,
             "ha_discovery_prefix": "homeassistant",
             "device_name": "hyponcloud2mqtt",
         }
