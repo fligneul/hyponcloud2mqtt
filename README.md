@@ -109,13 +109,6 @@ mqtt_topic: "solar/inverter"
 ha_discovery_enabled: true
 ha_discovery_prefix: "homeassistant"
 device_name: "Solar Inverter"
-
-sensors:
-  - name: "Solar Power"
-    unique_id: "solar_power_pv"
-    value_template: "{{ value_json.power_pv }}"
-    device_class: "power"
-    unit_of_measurement: "W"
 ```
 
 ## Secrets Management
@@ -239,23 +232,6 @@ docker-compose up -d
 ## Home Assistant Integration
 
 The daemon automatically publishes MQTT Discovery messages for configured sensors. Home Assistant will auto-detect and create entities.
-
-### Example Sensor Configuration
-
-```yaml
-sensors:
-  - name: "Solar Power"
-    unique_id: "solar_power_pv"
-    value_template: "{{ value_json.power_pv }}"
-    device_class: "power"
-    unit_of_measurement: "W"
-  
-  - name: "Solar Generation Today"
-    unique_id: "solar_gen_today"
-    value_template: "{{ value_json.today_generation }}"
-    device_class: "energy"
-    unit_of_measurement: "kWh"
-```
 
 ### Published MQTT Data
 

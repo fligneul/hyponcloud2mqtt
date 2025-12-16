@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from hyponcloud2mqtt.config import Config, SensorConfig
+from hyponcloud2mqtt.config import Config
 from hyponcloud2mqtt.main import Daemon
 
 
@@ -8,7 +8,9 @@ from hyponcloud2mqtt.main import Daemon
 @patch('hyponcloud2mqtt.main.DataFetcher')
 @patch('hyponcloud2mqtt.main.HealthServer')
 @patch('hyponcloud2mqtt.main.Config.load')
+@patch('hyponcloud2mqtt.main.publish_discovery_message')
 def test_discovery_disabled(
+        mock_publish_discovery,
         mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that no discovery messages are published when discovery is disabled."""
     # Arrange
@@ -20,12 +22,7 @@ def test_discovery_disabled(
         mqtt_port=1883,
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
-        ha_discovery_enabled=False,
-        sensors=[
-            SensorConfig(
-                name="test",
-                unique_id="test",
-                value_template="test")]
+        ha_discovery_enabled=False
     )
     mock_config_load.return_value = config
     mock_mqtt_instance = mock_mqtt_client.return_value
@@ -41,31 +38,28 @@ def test_discovery_disabled(
         assert e.code == 0
 
     # Assert
-    mock_mqtt_instance.publish_discovery.assert_not_called()
+    mock_publish_discovery.assert_not_called()
 
 
 @patch('hyponcloud2mqtt.main.MqttClient')
 @patch('hyponcloud2mqtt.main.DataFetcher')
 @patch('hyponcloud2mqtt.main.HealthServer')
 @patch('hyponcloud2mqtt.main.Config.load')
+@patch('hyponcloud2mqtt.main.publish_discovery_message')
 def test_discovery_enabled(
+        mock_publish_discovery,
         mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that discovery messages are published when discovery is enabled."""
     # Arrange
     config = Config(
         http_url="http://mock.url",
-        system_ids=["12345"],
+        system_ids=["12345", "67890"],
         http_interval=60,
         mqtt_broker="localhost",
         mqtt_port=1883,
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=True,
-        sensors=[
-            SensorConfig(
-                name="test",
-                unique_id="test",
-                value_template="test")],
         dry_run=False
     )
     mock_config_load.return_value = config
@@ -81,4 +75,6 @@ def test_discovery_enabled(
     assert e.value.code == 0
 
     # Assert
-    mock_mqtt_instance.publish_discovery.assert_called_once()
+    assert mock_publish_discovery.call_count == 2
+    mock_publish_discovery.assert_any_call(mock_mqtt_instance, config, "12345")
+    mock_publish_discovery.assert_any_call(mock_mqtt_instance, config, "67890")
