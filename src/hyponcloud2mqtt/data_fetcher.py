@@ -1,5 +1,7 @@
 import logging
 import sys
+import requests
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .http_client import HttpClient, AuthenticationError
 from .data_merger import merge_api_data
@@ -12,40 +14,81 @@ class DataFetcher:
         self.config = config
         self.system_id = system_id
         self.base_url = config.http_url.rstrip('/')
-        self.token = None
+        self.session = requests.Session()
+        self.session.verify = self.config.verify_ssl
         self.monitor_client = None
         self.production_client = None
         self.status_client = None
+        self._reauth_lock = threading.Lock()
 
         self.setup_clients()
 
+    def _login(self) -> str | None:
+        """
+        Login to the API and retrieve Bearer token.
+        """
+        if not (self.config.api_username and self.config.api_password):
+            logger.warning("No API credentials provided, skipping login")
+            return None
+
+        login_url = f"{self.base_url}/login"
+        logger.info(f"Attempting login to {login_url}")
+        payload = {
+            "username": self.config.api_username,
+            "password": self.config.api_password,
+            "oem": None
+        }
+
+        try:
+            response = self.session.post(login_url, json=payload, timeout=10)
+            logger.debug(
+                f"Login request sent, status code: {response.status_code}")
+            response.raise_for_status()
+            data = response.json()
+
+            if not isinstance(data, dict):
+                logger.error(f"Login response is not a JSON object: {data}")
+                return None
+
+            code = data.get("code")
+            if code != 20000:
+                logger.error(f"Login failed with code {code}")
+                return None
+
+            token = data.get("data", {}).get("token")
+            if not token:
+                logger.error("No token in login response")
+                return None
+
+            logger.info("Successfully logged in and retrieved token")
+            return token
+
+        except requests.RequestException as e:
+            logger.error(f"Error during login: {e}")
+            return None
+        except ValueError as e:
+            logger.error(f"Error parsing login response: {e}")
+            return None
+
     def setup_clients(self):
         # Login to get Bearer token
-        if self.config.api_username and self.config.api_password:
-            logger.info("Logging in to retrieve Bearer token...")
-            self.token = HttpClient.login(
-                self.base_url,
-                self.config.api_username,
-                self.config.api_password,
-                self.config.verify_ssl)
-            if not self.token:
-                logger.critical("Failed to retrieve Bearer token")
-                sys.exit(1)
-            logger.info("Successfully authenticated")
-        else:
-            logger.warning("No API credentials provided")
+        token = self._login()
+        if token:
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
+        elif self.config.api_username and self.config.api_password:
+            # If login was expected but failed
+            logger.critical("Failed to retrieve Bearer token")
+            sys.exit(1)
 
         # Construct plant-specific base URL
         plant_base_url = f"{self.base_url}/plant/{self.system_id}"
 
         self.monitor_client = HttpClient(
-            f"{plant_base_url}/monitor?refresh=true",
-            self.token,
-            self.config.verify_ssl)
+            f"{plant_base_url}/monitor?refresh=true", self.session)
         self.production_client = HttpClient(
-            f"{plant_base_url}/production2", self.token, self.config.verify_ssl)
+            f"{plant_base_url}/production2", self.session)
         self.status_client = HttpClient(
-            f"{plant_base_url}/status", self.token, self.config.verify_ssl)
+            f"{plant_base_url}/status", self.session)
 
         logger.info("HTTP clients initialized for 3 endpoints")
 
@@ -82,42 +125,33 @@ class DataFetcher:
                     production_data = future_production.result()
                     status_data = future_status.result()
 
-                # If we got here, all requests succeeded (or failed without
-                # AuthError)
+                # If we got here, all requests succeeded
                 break
 
             except AuthenticationError:
                 logger.warning(
                     f"Authentication failed during fetch (attempt {attempt + 1}/{max_retries})")
                 if attempt < max_retries - 1:
-                    if self.config.api_username and self.config.api_password:
+                    # Use a lock to prevent multiple threads from trying to re-login at once
+                    with self._reauth_lock:
                         logger.info("Attempting to re-login...")
-                        new_token = HttpClient.login(
-                            self.base_url,
-                            self.config.api_username,
-                            self.config.api_password,
-                            self.config.verify_ssl)
+                        new_token = self._login()
                         if new_token:
                             logger.info(
-                                "Successfully re-authenticated, updating tokens")
-                            self.monitor_client.update_token(new_token)
-                            self.production_client.update_token(new_token)
-                            self.status_client.update_token(new_token)
+                                "Successfully re-authenticated, updating session token")
+                            self.session.headers.update(
+                                {"Authorization": f"Bearer {new_token}"})
                             continue  # Retry the loop
                         else:
                             logger.error("Re-authentication failed")
                             break  # Stop retrying
-                    else:
-                        logger.error("No credentials to re-authenticate")
-                        break
                 else:
                     logger.error("Max retries reached for authentication")
             except Exception as e:
                 logger.error(f"Unexpected error during fetch: {e}")
                 break
 
-        # Check if all requests failed (general failure, not caught by
-        # AuthError logic)
+        # Check if all requests failed
         if monitor_data is None and production_data is None and status_data is None:
             logger.warning("All API requests failed or returned None")
             return None

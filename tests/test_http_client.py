@@ -1,173 +1,94 @@
 from __future__ import annotations
 import pytest
-import responses
+from unittest.mock import MagicMock
 from hyponcloud2mqtt.http_client import HttpClient, AuthenticationError
 
 
-@responses.activate
-def test_login_success():
-    """Test successful login with correct credentials."""
-    import json
+def test_fetch_data_success():
+    """Test fetching data successfully."""
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"code": 20000, "data": {"power_pv": 100}}
+    mock_session.get.return_value = mock_response
 
-    responses.add(
-        responses.POST,
-        "http://api.example.com/login",
-        json={"code": 20000, "data": {"token": "test-token-12345"}},
-        status=200
-    )
-
-    token = HttpClient.login("http://api.example.com", "testuser", "testpass")
-
-    assert token == "test-token-12345"
-    assert len(responses.calls) == 1
-    request_body = json.loads(responses.calls[0].request.body)
-    assert request_body == {
-        "username": "testuser",
-        "password": "testpass",
-        "oem": None
-    }
-
-
-@responses.activate
-def test_login_failure_wrong_code():
-    """Test login failure with wrong code."""
-    responses.add(
-        responses.POST,
-        "http://api.example.com/login",
-        json={"code": 50001, "message": "Invalid credentials"},
-        status=200
-    )
-
-    token = HttpClient.login("http://api.example.com", "baduser", "badpass")
-
-    assert token is None
-
-
-@responses.activate
-def test_fetch_data_with_valid_token():
-    """Test fetching data with a valid Bearer token."""
-    responses.add(
-        responses.GET,
-        "http://api.example.com/monitor",
-        json={"code": 20000, "data": {"power_pv": 100}},
-        status=200
-    )
-
-    client = HttpClient("http://api.example.com/monitor", "valid-token")
+    client = HttpClient("http://api.example.com/monitor", mock_session)
     data = client.fetch_data()
 
     assert data == {"code": 20000, "data": {"power_pv": 100}}
-    assert len(responses.calls) == 1
-    assert responses.calls[0].request.headers["Authorization"] == "Bearer valid-token"
+    mock_session.get.assert_called_once_with(
+        "http://api.example.com/monitor", timeout=10)
 
 
-@responses.activate
 def test_fetch_data_expired_token():
     """Test fetching data with expired token (code 50008)."""
-    responses.add(
-        responses.GET,
-        "http://api.example.com/monitor",
-        json={"code": 50008, "message": "User authentication failed"},
-        status=200
-    )
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "code": 50008, "message": "User authentication failed"}
+    mock_session.get.return_value = mock_response
 
-    client = HttpClient("http://api.example.com/monitor", "expired-token")
-
-    with pytest.raises(AuthenticationError):
-        client.fetch_data()
-
-
-@responses.activate
-def test_fetch_data_without_token():
-    """Test fetching data without authentication."""
-    responses.add(
-        responses.GET,
-        "http://api.example.com/monitor",
-        json={"code": 50008, "message": "User authentication failed"},
-        status=200
-    )
-
-    client = HttpClient("http://api.example.com/monitor", None)
+    client = HttpClient("http://api.example.com/monitor", mock_session)
 
     with pytest.raises(AuthenticationError):
         client.fetch_data()
 
 
-@responses.activate
-def test_full_auth_flow():
-    """Test complete authentication flow: login -> fetch -> token expired -> re-login -> fetch."""
-    # First login
-    responses.add(
-        responses.POST,
-        "http://api.example.com/login",
-        json={"code": 20000, "data": {"token": "token-1"}},
-        status=200
-    )
+def test_fetch_data_server_error_code():
+    """Test fetching data with a non-20000 non-50008 error code."""
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"code": 50001, "message": "Server error"}
+    mock_session.get.return_value = mock_response
 
-    # First fetch succeeds
-    responses.add(
-        responses.GET,
-        "http://api.example.com/data",
-        json={"code": 20000, "data": {"value": 42}},
-        status=200
-    )
-
-    # Second fetch fails (token expired)
-    responses.add(
-        responses.GET,
-        "http://api.example.com/data",
-        json={"code": 50008, "message": "User authentication failed"},
-        status=200
-    )
-
-    # Re-login
-    responses.add(
-        responses.POST,
-        "http://api.example.com/login",
-        json={"code": 20000, "data": {"token": "token-2"}},
-        status=200
-    )
-
-    # Third fetch succeeds with new token
-    responses.add(
-        responses.GET,
-        "http://api.example.com/data",
-        json={"code": 20000, "data": {"value": 43}},
-        status=200
-    )
-
-    # Simulate the flow
-    token = HttpClient.login("http://api.example.com", "user", "pass")
-    assert token == "token-1"
-
-    client = HttpClient("http://api.example.com/data", token)
+    client = HttpClient("http://api.example.com/monitor", mock_session)
     data = client.fetch_data()
-    assert data["data"]["value"] == 42
 
-    # Token expires
-    with pytest.raises(AuthenticationError):
-        client.fetch_data()
+    assert data is None
 
-    # Re-login
-    new_token = HttpClient.login("http://api.example.com", "user", "pass")
-    assert new_token == "token-2"
 
-    client.update_token(new_token)
+def test_fetch_data_http_error():
+    """Test fetching data with an HTTP error (non-200 status code)."""
+    import requests
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = requests.HTTPError(
+        "500 Server Error")
+    mock_session.get.return_value = mock_response
+
+    client = HttpClient("http://api.example.com/monitor", mock_session)
     data = client.fetch_data()
-    assert data["data"]["value"] == 43
+
+    assert data is None
 
 
-@responses.activate
-def test_fetch_data_generic_error():
-    """Test fetching data with a generic error (not 50008)."""
-    responses.add(
-        responses.GET,
-        "http://api.example.com/monitor",
-        json={"code": 50001, "message": "Server error"},
-        status=200
-    )
+def test_fetch_data_invalid_json():
+    """Test fetching data that returns invalid JSON."""
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    # Simulating json() raising ValueError which is common when parsing fails
+    mock_response.json.side_effect = ValueError("No JSON object could be decoded")
+    mock_session.get.return_value = mock_response
 
-    client = HttpClient("http://api.example.com/monitor", "valid-token")
+    client = HttpClient("http://api.example.com/monitor", mock_session)
+    data = client.fetch_data()
+
+    assert data is None
+
+
+def test_fetch_data_not_json_dict():
+    """Test fetching data that returns JSON but not a dict."""
+    mock_session = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = ["list", "instead", "of", "dict"]
+    mock_session.get.return_value = mock_response
+
+    client = HttpClient("http://api.example.com/monitor", mock_session)
     data = client.fetch_data()
 
     assert data is None
