@@ -1,19 +1,10 @@
 from __future__ import annotations
 import os
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Any
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class SensorConfig:
-    name: str
-    unique_id: str
-    value_template: str
-    device_class: str | None = None
-    unit_of_measurement: str | None = None
 
 
 @dataclass
@@ -34,10 +25,9 @@ class Config:
     mqtt_tls_insecure: bool = False
     mqtt_ca_path: str | None = None
     dry_run: bool = False
-    ha_discovery_enabled: bool = False
+    ha_discovery_enabled: bool = True
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
-    sensors: List[SensorConfig] = field(default_factory=list)
     health_server_enabled: bool = True
 
     @classmethod
@@ -61,10 +51,9 @@ class Config:
             "api_password": None,
             "verify_ssl": True,
             "dry_run": False,
-            "ha_discovery_enabled": False,
+            "ha_discovery_enabled": True,
             "ha_discovery_prefix": "homeassistant",
             "device_name": "hyponcloud2mqtt",
-            "sensors": [],
         }
 
         # Load from file if exists
@@ -164,15 +153,6 @@ class Config:
         if ha_discovery_enabled_env:
             config["ha_discovery_enabled"] = ha_discovery_enabled_env.lower() in ("true", "1", "yes")
 
-        # Parse sensors from config file (already loaded in config dict)
-        # Convert dicts to SensorConfig objects
-        sensors_data = config.get("sensors", [])
-        sensors = []
-        for s in sensors_data:
-            if isinstance(s, dict):
-                sensors.append(SensorConfig(**s))
-        config["sensors"] = sensors
-
         # Validate configuration
         cls._validate_config(config)
 
@@ -183,8 +163,6 @@ class Config:
         if config['dry_run']:
             logger.warning(
                 "DRY RUN MODE: MQTT publishing disabled (logging only)")
-        if sensors:
-            logger.info(f"Configured {len(sensors)} Home Assistant sensors")
 
         return cls(**config)
 

@@ -37,49 +37,6 @@ def test_mqtt_client_publish():
         client.client.publish.assert_called()
 
 
-def test_publish_discovery():
-    import json
-    from hyponcloud2mqtt.config import SensorConfig
-
-    with patch('paho.mqtt.client.Client'):
-        client = MqttClient("broker", 1883, "topic", "availability_topic")
-        client.connect()
-
-        # Simulate successful connection
-        client._on_connect(client.client, None, None, 0)
-
-        sensor = SensorConfig(
-            name="Test Sensor",
-            unique_id="test_sensor",
-            value_template="{{ value_json.test }}",
-            device_class="temperature",
-            unit_of_measurement="C"
-        )
-
-        client.publish_discovery(
-            sensor, "device_name", "homeassistant", "state_topic")
-
-        # Verify publish called with correct topic and payload
-        assert client.client.publish.called
-        # Get the call for discovery (last call might be data publish or online status, so we need to find the right one)
-        # But here we only called connect (which calls publish online) and publish_discovery.
-        # So we look for the call to the config topic.
-
-        found = False
-        for call in client.client.publish.call_args_list:
-            args, _ = call
-            if args[0] == "homeassistant/sensor/device_name/test_sensor/config":
-                found = True
-                payload = json.loads(args[1])
-                assert payload["name"] == "Test Sensor"
-                assert payload["availability_topic"] == "availability_topic"
-                assert payload["payload_available"] == "online"
-                assert payload["payload_not_available"] == "offline"
-                break
-
-        assert found
-
-
 def test_mqtt_client_dry_run():
     with patch('paho.mqtt.client.Client'):
         # Initialize with dry_run=True
@@ -90,18 +47,6 @@ def test_mqtt_client_dry_run():
         client.publish({"key": "value"})
 
         # Verify underlying publish was NOT called
-        client.client.publish.assert_not_called()
-
-        # Test publish_discovery
-        from hyponcloud2mqtt.config import SensorConfig
-        sensor = SensorConfig(
-            name="Test Sensor",
-            unique_id="test_sensor",
-            value_template="{{ value_json.test }}"
-        )
-        client.publish_discovery(sensor, "device", "prefix", "topic")
-
-        # Verify underlying publish was still NOT called
         client.client.publish.assert_not_called()
 
 

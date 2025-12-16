@@ -10,6 +10,7 @@ from .config import Config
 from .mqtt_client import MqttClient
 from .health_server import HealthServer, HealthContext, HealthHTTPHandler
 from .data_fetcher import DataFetcher
+from .discovery import publish_discovery_message
 
 # Configure logging
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -97,17 +98,12 @@ class Daemon:
         logger.info(
             f"Starting daemon, fetching every {config.http_interval} seconds")
 
-        # Publish HA Discovery (only if connected or in dry run mode)
-        if config.sensors and config.ha_discovery_enabled:
-            if mqtt_client.connected or config.dry_run:
+        # Publish HA Discovery (only if MQTT is connected)
+        if config.ha_discovery_enabled:
+            if mqtt_client.connected:
                 logger.info("Publishing Home Assistant discovery messages...")
-                for sensor in config.sensors:
-                    mqtt_client.publish_discovery(
-                        sensor,
-                        config.device_name,
-                        config.ha_discovery_prefix,
-                        config.mqtt_topic
-                    )
+                for system_id in config.system_ids:
+                    publish_discovery_message(mqtt_client, config, system_id)
             else:
                 logger.warning(
                     "Skipping Home Assistant discovery: MQTT not connected")

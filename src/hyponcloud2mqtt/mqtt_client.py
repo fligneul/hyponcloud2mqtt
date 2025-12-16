@@ -3,10 +3,7 @@ import json
 import logging
 import threading
 import paho.mqtt.client as mqtt
-from typing import Any, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .config import SensorConfig
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -134,82 +131,23 @@ class MqttClient:
         self.client.disconnect()
         logger.debug("MQTT client disconnected")
 
-    def publish(self, data: Any, topic: str | None = None):
+    def publish(self, data: Any, topic: str | None = None, retain: bool = False):
         """Publish data to a specific topic, or the default if not provided."""
         publish_topic = topic if topic is not None else self.topic
 
         if self.dry_run:
             payload = json.dumps(data, indent=2)
             logger.info(
-                f"[DRY RUN] Would publish to {publish_topic}:\n{payload}")
+                f"[DRY RUN] Would publish to {publish_topic} (retain={retain}):\n{payload}")
             return
 
         try:
             payload = json.dumps(data)
             logger.debug(
                 f"Publishing {len(payload)} bytes to {publish_topic}")
-            info = self.client.publish(publish_topic, payload)
+            info = self.client.publish(publish_topic, payload, retain=retain)
             info.wait_for_publish()
             logger.debug(
                 f"Data published successfully to {publish_topic}")
         except Exception as e:
             logger.error(f"Error publishing to MQTT: {e}")
-
-    def publish_discovery(
-            self,
-            sensor: SensorConfig,
-            device_name: str,
-            discovery_prefix: str,
-            state_topic: str):
-        if self.dry_run:
-            logger.info(
-                f"[DRY RUN] Would publish Home Assistant discovery for '{sensor.name}'")
-            return
-
-        if not self.connected:
-            logger.warning(
-                f"Cannot publish discovery for '{sensor.name}': MQTT not connected")
-            return
-
-        try:
-            # Construct unique ID and Topic
-            # Topic: <prefix>/sensor/<device_name>/<sensor_unique_id>/config
-            # We use device_name as node_id
-
-            # Sanitize IDs for topic
-            safe_device_name = device_name.replace(" ", "_").lower()
-            safe_sensor_id = sensor.unique_id.replace(" ", "_").lower()
-
-            topic = f"{discovery_prefix}/sensor/{safe_device_name}/{safe_sensor_id}/config"
-
-            payload = {
-                "name": sensor.name,
-                "unique_id": f"{safe_device_name}_{safe_sensor_id}",
-                "state_topic": state_topic,
-                "value_template": sensor.value_template,
-                "device": {
-                    "identifiers": [safe_device_name],
-                    "name": device_name,
-                    "manufacturer": "hyponcloud2mqtt",
-                }
-            }
-
-            if sensor.device_class:
-                payload["device_class"] = sensor.device_class
-
-            if sensor.unit_of_measurement:
-                payload["unit_of_measurement"] = sensor.unit_of_measurement
-
-            # Add availability
-            payload["availability_topic"] = self.availability_topic
-            payload["payload_available"] = "online"
-            payload["payload_not_available"] = "offline"
-
-            json_payload = json.dumps(payload)
-            info = self.client.publish(topic, json_payload, retain=True)
-            info.wait_for_publish()
-            logger.info(
-                f"Published Home Assistant discovery for '{sensor.name}' to {topic}")
-
-        except Exception as e:
-            logger.error(f"Error publishing discovery for {sensor.name}: {e}")
