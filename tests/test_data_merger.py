@@ -53,8 +53,8 @@ def test_merge_api_data():
     assert merged["power_pv"] == 41
     assert merged["today_generation"] == 0.02
     assert merged["co2"] == 2.83
-    assert merged["gateway"]["online"] == 1
-    assert merged["inverter"]["normal"] == 1
+    assert merged["gateway_online"] == 1
+    assert merged["inverter_normal"] == 1
 
 
 def test_merge_api_data_with_none():

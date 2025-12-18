@@ -49,17 +49,13 @@ def merge_api_data(
     if status and "data" in status:
         data = status["data"]
         if "gateway" in data:
-            merged["gateway"] = {
-                "online": data["gateway"].get("online"),
-                "offline": data["gateway"].get("offline")
-            }
+            merged["gateway_online"] = data["gateway"].get("online")
+            merged["gateway_offline"] = data["gateway"].get("offline")
         if "inverter" in data:
-            merged["inverter"] = {
-                "online": data["inverter"].get("online"),
-                "normal": data["inverter"].get("normal"),
-                "offline": data["inverter"].get("offline"),
-                "fault": data["inverter"].get("fault"),
-                "wait": data["inverter"].get("wait")
-            }
+            merged["inverter_online"] = data["inverter"].get("online")
+            merged["inverter_normal"] = data["inverter"].get("normal")
+            merged["inverter_offline"] = data["inverter"].get("offline")
+            merged["inverter_fault"] = data["inverter"].get("fault")
+            merged["inverter_wait"] = data["inverter"].get("wait")
 
     return merged

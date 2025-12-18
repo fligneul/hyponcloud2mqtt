@@ -9,43 +9,53 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Sensor definitions hardcoded for Hypon inverters
 SENSORS = {
-    "today_earning": {"name": "Today Earning", "icon": "mdi:currency-usd"},
-    "month_earning": {"name": "Month Earning", "icon": "mdi:currency-usd"},
-    "total_earning": {"name": "Total Earning", "icon": "mdi:currency-usd"},
-    "e_total": {
+    "today_revenue": {"name": "Today Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
+    "month_revenue": {"name": "Month Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
+    "total_revenue": {"name": "Total Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
+    "total_generation": {
         "name": "Total Energy",
         "unit": "kWh",
         "device_class": "energy",
         "state_class": "total_increasing"
     },
-    "e_month": {
+    "month_generation": {
         "name": "Month Energy",
         "unit": "kWh",
-        "device_class": "energy"
+        "device_class": "energy",
+        "state_class": "total_increasing"
     },
-    "e_today": {
+    "today_generation": {
         "name": "Today Energy",
         "unit": "kWh",
         "device_class": "energy",
         "state_class": "total_increasing"
     },
-    "e_year": {
+    "year_generation": {
         "name": "Year Energy",
         "unit": "kWh",
-        "device_class": "energy"
+        "device_class": "energy",
+        "state_class": "total_increasing"
     },
-    "total_tree": {"name": "Trees Planted", "unit": "trees", "icon": "mdi:tree"},
-    "total_co2": {"name": "CO2 Saved", "unit": "kg", "icon": "mdi:molecule-co2"},
-    "total_diesel": {"name": "Diesel Saved", "unit": "L", "icon": "mdi:barrel"},
-    "percent": {"name": "Capacity Percentage", "unit": "%", "icon": "mdi:percent"},
-    "meter_power": {"name": "Meter Power", "unit": "W", "device_class": "power"},
-    "power_load": {"name": "Power Load", "unit": "W", "device_class": "power"},
-    "w_cha": {"name": "Charging Power", "unit": "W", "device_class": "power"},
-    "power_pv": {"name": "PV Power", "unit": "W", "device_class": "power"},
-    "soc": {"name": "State of Charge", "unit": "%", "device_class": "battery"},
-    "micro": {"name": "Microinverters", "icon": "mdi:chip"},
+    "tree": {"name": "Trees Planted", "unit": "trees", "icon": "mdi:tree", "state_class": "total_increasing"},
+    "co2": {"name": "CO2 Saved", "unit": "kg", "icon": "mdi:molecule-co2", "state_class": "total_increasing"},
+    "diesel": {"name": "Diesel Saved", "unit": "L", "icon": "mdi:barrel", "state_class": "total_increasing"},
+    "percent": {"name": "Capacity Factor", "unit": "%", "icon": "mdi:percent", "state_class": "measurement"},
+    "meter_power": {"name": "Meter Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
+    "power_load": {"name": "Power Load", "unit": "W", "device_class": "power", "state_class": "measurement"},
+    "w_cha": {"name": "Charging Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
+    "power_pv": {"name": "PV Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
+    "gateway_online": {"name": "Gateway Online", "icon": "mdi:cloud-check", "entity_category": "diagnostic"},
+    "gateway_offline": {"name": "Gateway Offline", "icon": "mdi:cloud-off-outline", "entity_category": "diagnostic"},
+    "inverter_online": {"name": "Inverter Online", "icon": "mdi:solar-power-variant", "entity_category": "diagnostic"},
+    "inverter_normal": {"name": "Inverter Normal", "icon": "mdi:check-circle-outline", "entity_category": "diagnostic"},
+    "inverter_offline": {
+        "name": "Inverter Offline",
+        "icon": "mdi:solar-power-variant-outline",
+        "entity_category": "diagnostic"
+    },
+    "inverter_fault": {"name": "Inverter Fault", "icon": "mdi:alert-circle-outline", "entity_category": "diagnostic"},
+    "inverter_wait": {"name": "Inverter Wait", "icon": "mdi:clock-outline", "entity_category": "diagnostic"},
 }
 
 
@@ -99,6 +109,8 @@ def publish_discovery_message(
             payload["state_class"] = attributes["state_class"]
         if "icon" in attributes:
             payload["icon"] = attributes["icon"]
+        if "entity_category" in attributes:
+            payload["entity_category"] = attributes["entity_category"]
 
         # Publish with retain=True so HA finds it on restart
         client.publish(payload, topic=discovery_topic, retain=True)

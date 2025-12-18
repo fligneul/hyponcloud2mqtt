@@ -144,7 +144,7 @@ class MqttClient:
         try:
             payload = json.dumps(data)
             logger.debug(
-                f"Publishing {len(payload)} bytes to {publish_topic}")
+                f"Publishing {len(payload)} bytes to {publish_topic}, retain={retain}")
             info = self.client.publish(publish_topic, payload, retain=retain)
             info.wait_for_publish()
             logger.debug(
