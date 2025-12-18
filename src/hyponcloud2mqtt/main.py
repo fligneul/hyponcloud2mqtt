@@ -95,9 +95,6 @@ class Daemon:
         else:
             logger.info("[DRY RUN] Skipping MQTT connection")
 
-        logger.info(
-            f"Starting daemon, fetching every {config.http_interval} seconds")
-
         # Publish HA Discovery (only if MQTT is connected)
         if config.ha_discovery_enabled:
             if mqtt_client.connected:
@@ -113,6 +110,9 @@ class Daemon:
                          for system_id in config.system_ids]
         logger.info(
             f"Initialized {len(data_fetchers)} data fetchers for system IDs: {config.system_ids}")
+
+        logger.info(
+            f"Starting daemon, fetching every {config.http_interval} seconds")
 
         while self.running:
             # Check MQTT connection before fetching (unless in dry run mode)
