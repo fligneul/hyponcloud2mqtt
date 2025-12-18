@@ -23,6 +23,7 @@ pip-cache/
 .github/
 tests/
 wiremock/
+scripts/
 .env.example
 *.md
 .release-please-manifest.json
