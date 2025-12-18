@@ -299,15 +299,61 @@ pytest
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run unit tests
 pytest
 
-# Run with coverage
+# Run tests with coverage
 pytest --cov=hyponcloud2mqtt
-
-# Run specific test file
-pytest tests/test_integration.py
 ```
+
+### Integration Tests
+
+The integration tests verify the daemon's behavior with a real MQTT broker and a mocked API (WireMock).
+
+#### Automated (Cross-Platform)
+
+The easiest way to run integration tests is using the provided Python script:
+
+```bash
+# Mac / Linux
+python3 scripts/run_integration_tests.py
+
+# Windows
+python scripts\run_integration_tests.py
+```
+
+This script will automatically start the required Docker containers, set the environment variables, and run the tests.
+
+#### Manual
+
+If you prefer to run the steps manually:
+
+1. **Start dependencies**:
+   ```bash
+   docker compose -f docker-compose.dev.yml up mosquitto wiremock -d
+   ```
+
+2. **Run the test with environment variables**:
+
+   **Mac / Linux:**
+   ```bash
+   export HTTP_URL=http://localhost:8080
+   export SYSTEM_IDS=your_system_id_1
+   export API_USERNAME=test_user
+   export API_PASSWORD=test_password
+   export MQTT_BROKER=localhost
+   .venv/bin/python -m pytest tests/test_wiremock_integration.py
+   ```
+
+   **Windows (PowerShell):**
+   ```powershell
+   $env:HTTP_URL="http://localhost:8080"
+   $env:SYSTEM_IDS="your_system_id_1"
+   $env:API_USERNAME="test_user"
+   $env:API_PASSWORD="test_password"
+   $env:MQTT_BROKER="localhost"
+   .\.venv\Scripts\python -m pytest tests/test_wiremock_integration.py
+   ```
 
 ### Local Development with WireMock
 

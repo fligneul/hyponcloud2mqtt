@@ -40,6 +40,8 @@ def test_daemon_fetches_and_publishes_data(test_config):
     # Events to signal we got what we wanted
     data_received_event = threading.Event()
     discovery_received_event = threading.Event()
+    online_received_event = threading.Event()
+    offline_received_event = threading.Event()
 
     data_topic = f"{test_config.mqtt_topic}/{test_config.system_ids[0]}"
     discovery_topic_prefix = f"{test_config.ha_discovery_prefix}/sensor/hypon_{test_config.system_ids[0]}"
@@ -55,6 +57,12 @@ def test_daemon_fetches_and_publishes_data(test_config):
             received_messages.append({"type": "discovery", "topic": msg.topic, "payload": json.loads(payload)})
             # We expect multiple, but receiving one is enough to prove the feature works for this integration test
             discovery_received_event.set()
+        elif msg.topic == test_config.mqtt_availability_topic:
+            received_messages.append({"type": "availability", "payload": payload})
+            if payload == "online":
+                online_received_event.set()
+            elif payload == "offline":
+                offline_received_event.set()
 
     mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     mqtt_client.on_message = on_message
@@ -68,8 +76,12 @@ def test_daemon_fetches_and_publishes_data(test_config):
     except (ConnectionRefusedError, OSError) as e:
         pytest.skip(f"MQTT broker not running on {test_config.mqtt_broker}:{test_config.mqtt_port}: {e}")
 
-    # Subscribe to data topic and discovery topics
-    mqtt_client.subscribe([(data_topic, 0), (f"{test_config.ha_discovery_prefix}/#", 0)])
+    # Subscribe to data topic, discovery topics, and availability topic
+    mqtt_client.subscribe([
+        (data_topic, 0),
+        (f"{test_config.ha_discovery_prefix}/#", 0),
+        (test_config.mqtt_availability_topic, 0)
+    ])
 
     # Start the MQTT client loop in a separate thread
     mqtt_client.loop_start()
@@ -86,18 +98,24 @@ def test_daemon_fetches_and_publishes_data(test_config):
         daemon_thread.start()
 
         # Wait for the messages to be received, with a timeout
+        online_ok = online_received_event.wait(timeout=10)
         data_ok = data_received_event.wait(timeout=10)
         discovery_ok = discovery_received_event.wait(timeout=10)
 
         daemon.running = False
         daemon_thread.join(timeout=5)
 
+        # After daemon stops, it should publish offline status
+        offline_ok = offline_received_event.wait(timeout=5)
+
     # Stop the MQTT client loop
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 
+    assert online_ok, "Test timed out waiting for online MQTT message"
     assert data_ok, "Test timed out waiting for data MQTT message"
     assert discovery_ok, "Test timed out waiting for discovery MQTT message"
+    assert offline_ok, "Test timed out waiting for offline MQTT message"
 
     # Verify Data
     data_message = next((m for m in received_messages if m["type"] == "data"), None)
