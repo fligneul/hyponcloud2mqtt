@@ -29,7 +29,7 @@ class Config:
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
     health_server_enabled: bool = True
-    mqtt_client_id: str | None = None
+    mqtt_client_id: str = "hyponcloud2mqtt"
 
     @classmethod
     def load(cls, config_path: str | None = None) -> "Config":  # noqa: C901
@@ -55,7 +55,7 @@ class Config:
             "ha_discovery_enabled": True,
             "ha_discovery_prefix": "homeassistant",
             "device_name": "hyponcloud2mqtt",
-            "mqtt_client_id": None,
+            "mqtt_client_id": "hyponcloud2mqtt",
         }
 
         # Load from file if exists

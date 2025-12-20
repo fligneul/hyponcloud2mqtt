@@ -62,3 +62,18 @@ def test_empty_system_ids_raises_error(monkeypatch):
     monkeypatch.delenv("SYSTEM_IDS", raising=False)
     with pytest.raises(ValueError, match="system_ids must be a non-empty list"):
         Config.load()
+
+
+def test_default_mqtt_client_id(monkeypatch):
+    """Test that mqtt_client_id has a default value"""
+    monkeypatch.setenv("SYSTEM_IDS", "12345")
+    config = Config.load()
+    assert config.mqtt_client_id == "hyponcloud2mqtt"
+
+
+def test_custom_mqtt_client_id(monkeypatch):
+    """Test that mqtt_client_id can be overridden"""
+    monkeypatch.setenv("SYSTEM_IDS", "12345")
+    monkeypatch.setenv("MQTT_CLIENT_ID", "custom_id")
+    config = Config.load()
+    assert config.mqtt_client_id == "custom_id"
