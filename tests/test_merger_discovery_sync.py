@@ -52,7 +52,7 @@ def test_merger_and_discovery_sync():
     # Assert
     # 1. Ensure merger produced expected fields (and only those)
     expected_fields = {
-        "percent", "meter_power", "power_load", "w_cha", "power_pv",
+        "percent", "w_cha", "power_pv",
         "today_generation", "month_generation", "year_generation", "total_generation",
         "co2", "tree", "diesel", "today_revenue", "month_revenue", "total_revenue",
         "gateway_online", "gateway_offline",

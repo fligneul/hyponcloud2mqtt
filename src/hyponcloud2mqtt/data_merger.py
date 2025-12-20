@@ -26,8 +26,6 @@ def merge_api_data(
     if monitor and "data" in monitor:
         data = monitor["data"]
         merged["percent"] = data.get("percent")
-        merged["meter_power"] = data.get("meter_power")
-        merged["power_load"] = data.get("power_load")
         merged["w_cha"] = data.get("w_cha")
         merged["power_pv"] = data.get("power_pv")
 
