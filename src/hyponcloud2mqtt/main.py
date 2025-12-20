@@ -53,7 +53,8 @@ class Daemon:
             config.dry_run,
             config.mqtt_tls_enabled,
             config.mqtt_tls_insecure,
-            config.mqtt_ca_path
+            config.mqtt_ca_path,
+            config.mqtt_client_id
         )
 
         # Start Health Server
