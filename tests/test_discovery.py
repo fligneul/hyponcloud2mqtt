@@ -1,7 +1,8 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from hyponcloud2mqtt.config import Config
 from hyponcloud2mqtt.main import Daemon
+from hyponcloud2mqtt.discovery import publish_discovery_message
 
 
 @patch('hyponcloud2mqtt.main.MqttClient')
@@ -78,3 +79,73 @@ def test_discovery_enabled(
     assert mock_publish_discovery.call_count == 2
     mock_publish_discovery.assert_any_call(mock_mqtt_instance, config, "12345")
     mock_publish_discovery.assert_any_call(mock_mqtt_instance, config, "67890")
+
+
+def test_publish_discovery_message_contains_precision():
+    # Arrange
+    client = MagicMock()
+    config = Config(
+        http_url="http://mock.url",
+        system_ids=["12345"],
+        http_interval=60,
+        mqtt_broker="localhost",
+        mqtt_port=1883,
+        mqtt_topic="hypon",
+        mqtt_availability_topic="hypon/status",
+        ha_discovery_enabled=True,
+        ha_discovery_prefix="homeassistant"
+    )
+    system_id = "12345"
+
+    # Act
+    publish_discovery_message(client, config, system_id)
+
+    # Assert
+    # Check at least one numeric sensor (e.g., today_generation)
+    found = False
+    for call in client.publish.call_args_list:
+        payload = call.args[0] if call.args else call.kwargs.get('payload')
+        topic = call.kwargs.get('topic') or (call.args[1] if len(call.args) > 1 else None)
+
+        if "today_generation" in (topic or ""):
+            assert payload["suggested_display_precision"] == 2
+            # Verify retain is False for No-Retain strategy
+            assert call.kwargs.get('retain') is False
+            found = True
+            break
+
+    assert found, "Discovery message for today_generation not found"
+
+
+def test_publish_discovery_message_no_precision_for_diagnostic():
+    # Arrange
+    client = MagicMock()
+    config = Config(
+        http_url="http://mock.url",
+        system_ids=["12345"],
+        http_interval=60,
+        mqtt_broker="localhost",
+        mqtt_port=1883,
+        mqtt_topic="hypon",
+        mqtt_availability_topic="hypon/status",
+        ha_discovery_enabled=True,
+        ha_discovery_prefix="homeassistant"
+    )
+    system_id = "12345"
+
+    # Act
+    publish_discovery_message(client, config, system_id)
+
+    # Assert
+    # Check a diagnostic sensor (e.g., gateway_online)
+    found = False
+    for call in client.publish.call_args_list:
+        payload = call.args[0]
+        topic = call.kwargs.get('topic')
+
+        if "gateway_online" in topic:
+            assert "suggested_display_precision" not in payload
+            found = True
+            break
+
+    assert found, "Discovery message for gateway_online not found"

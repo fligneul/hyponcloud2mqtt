@@ -53,6 +53,8 @@ class MqttClient:
 
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
+        self.client.on_message = self._on_message
+        self.message_callback = None
 
     def _on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
@@ -74,6 +76,14 @@ class MqttClient:
         self.connected = False
         if rc != 0:
             logger.warning("Unexpected disconnection from MQTT broker")
+
+    def _on_message(self, client, userdata, msg):
+        logger.debug(f"Received message on topic {msg.topic}")
+        if self.message_callback:
+            try:
+                self.message_callback(client, userdata, msg)
+            except Exception as e:
+                logger.error(f"Error in MQTT message callback: {e}")
 
     def connect(self, timeout: int = 10) -> bool:
         """Connect to MQTT broker and wait for connection to succeed or fail.
@@ -151,3 +161,15 @@ class MqttClient:
                 f"Data published successfully to {publish_topic}")
         except Exception as e:
             logger.error(f"Error publishing to MQTT: {e}")
+
+    def subscribe(self, topic: str, qos: int = 0):
+        """Subscribe to a topic."""
+        if self.dry_run:
+            logger.info(f"[DRY RUN] Would subscribe to {topic}")
+            return
+
+        try:
+            logger.debug(f"Subscribing to {topic} (qos={qos})")
+            self.client.subscribe(topic, qos=qos)
+        except Exception as e:
+            logger.error(f"Error subscribing to {topic}: {e}")

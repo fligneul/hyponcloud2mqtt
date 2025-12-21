@@ -112,6 +112,8 @@ def publish_discovery_message(
         if "entity_category" in attributes:
             payload["entity_category"] = attributes["entity_category"]
 
-        # Publish with retain=True so HA finds it on restart
-        client.publish(payload, topic=discovery_topic, retain=True)
+        # Publish discovery message
+        # We use retain=False for "No-Retain" strategy.
+        # Discovery will be re-published on Home Assistant birth message.
+        client.publish(payload, topic=discovery_topic, retain=False)
         logger.debug(f"Published discovery for {key} to {discovery_topic}")
