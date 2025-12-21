@@ -1,7 +1,7 @@
 """Home Assistant Discovery module."""
 from __future__ import annotations
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypedDict
 
 if TYPE_CHECKING:
     from .config import Config
@@ -9,10 +9,37 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-SENSORS = {
-    "today_revenue": {"name": "Today Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
-    "month_revenue": {"name": "Month Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
-    "total_revenue": {"name": "Total Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
+
+class SensorAttribute(TypedDict, total=False):
+    """Type definition for sensor attributes."""
+    name: str
+    unit: str
+    icon: str
+    device_class: str
+    state_class: str
+    display_precision: int
+    entity_category: str
+
+
+SENSORS: dict[str, SensorAttribute] = {
+    "today_revenue": {
+        "name": "Today Revenue",
+        "icon": "mdi:currency-usd",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
+    "month_revenue": {
+        "name": "Month Revenue",
+        "icon": "mdi:currency-usd",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
+    "total_revenue": {
+        "name": "Total Revenue",
+        "icon": "mdi:currency-usd",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
     "total_generation": {
         "name": "Total Energy",
         "unit": "kWh",
@@ -41,23 +68,82 @@ SENSORS = {
         "state_class": "total_increasing",
         "display_precision": 2
     },
-    "tree": {"name": "Equivalent Trees Planted", "icon": "mdi:tree", "state_class": "total_increasing", "display_precision": 2},
-    "co2": {"name": "CO2 Emissions Reduction", "unit": "kg", "icon": "mdi:molecule-co2", "state_class": "total_increasing", "display_precision": 2},
-    "diesel": {"name": "Equivalent Diesel Saved", "unit": "L", "icon": "mdi:barrel", "state_class": "total_increasing", "display_precision": 2},
-    "percent": {"name": "Production Capacity Factor", "unit": "%", "icon": "mdi:percent", "state_class": "measurement", "display_precision": 2},
-    "w_cha": {"name": "Charging Power", "unit": "W", "device_class": "power", "state_class": "measurement", "display_precision": 0},
-    "power_pv": {"name": "Solar Power Generation", "unit": "W", "device_class": "power", "state_class": "measurement", "display_precision": 0},
-    "gateway_online": {"name": "Gateway Online", "icon": "mdi:cloud-check", "entity_category": "diagnostic"},
-    "gateway_offline": {"name": "Gateway Offline", "icon": "mdi:cloud-off-outline", "entity_category": "diagnostic"},
-    "inverter_online": {"name": "Inverter Online", "icon": "mdi:solar-power-variant", "entity_category": "diagnostic"},
-    "inverter_normal": {"name": "Inverter Normal", "icon": "mdi:check-circle-outline", "entity_category": "diagnostic"},
+    "tree": {
+        "name": "Equivalent Trees Planted",
+        "icon": "mdi:tree",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
+    "co2": {
+        "name": "CO2 Emissions Reduction",
+        "unit": "kg",
+        "icon": "mdi:molecule-co2",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
+    "diesel": {
+        "name": "Equivalent Diesel Saved",
+        "unit": "L",
+        "icon": "mdi:barrel",
+        "state_class": "total_increasing",
+        "display_precision": 2
+    },
+    "percent": {
+        "name": "Production Capacity Factor",
+        "unit": "%",
+        "icon": "mdi:percent",
+        "state_class": "measurement",
+        "display_precision": 2
+    },
+    "w_cha": {
+        "name": "Charging Power",
+        "unit": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "display_precision": 0
+    },
+    "power_pv": {
+        "name": "Solar Power Generation",
+        "unit": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "display_precision": 0
+    },
+    "gateway_online": {
+        "name": "Gateway Online",
+        "icon": "mdi:cloud-check",
+        "entity_category": "diagnostic"
+    },
+    "gateway_offline": {
+        "name": "Gateway Offline",
+        "icon": "mdi:cloud-off-outline",
+        "entity_category": "diagnostic"
+    },
+    "inverter_online": {
+        "name": "Inverter Online",
+        "icon": "mdi:solar-power-variant",
+        "entity_category": "diagnostic"
+    },
+    "inverter_normal": {
+        "name": "Inverter Normal",
+        "icon": "mdi:check-circle-outline",
+        "entity_category": "diagnostic"
+    },
     "inverter_offline": {
         "name": "Inverter Offline",
         "icon": "mdi:solar-power-variant-outline",
         "entity_category": "diagnostic"
     },
-    "inverter_fault": {"name": "Inverter Fault", "icon": "mdi:alert-circle-outline", "entity_category": "diagnostic"},
-    "inverter_wait": {"name": "Inverter Wait", "icon": "mdi:clock-outline", "entity_category": "diagnostic"},
+    "inverter_fault": {
+        "name": "Inverter Fault",
+        "icon": "mdi:alert-circle-outline",
+        "entity_category": "diagnostic"
+    },
+    "inverter_wait": {
+        "name": "Inverter Wait",
+        "icon": "mdi:clock-outline",
+        "entity_category": "diagnostic"
+    },
 }
 
 
