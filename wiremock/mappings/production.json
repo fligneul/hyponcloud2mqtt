@@ -7,7 +7,7 @@
         "status": 200,
         "jsonBody": {
             "data": {
-                "today_generation": 0,
+                "today_generation": 0.01,
                 "month_generation": 1.02,
                 "year_generation": 95.35,
                 "total_generation": 95.35,
