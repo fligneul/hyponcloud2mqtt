@@ -10,41 +10,43 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 SENSORS = {
-    "today_revenue": {"name": "Today Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
-    "month_revenue": {"name": "Month Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
-    "total_revenue": {"name": "Total Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing"},
+    "today_revenue": {"name": "Today Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
+    "month_revenue": {"name": "Month Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
+    "total_revenue": {"name": "Total Revenue", "icon": "mdi:currency-usd", "state_class": "total_increasing", "display_precision": 2},
     "total_generation": {
         "name": "Total Energy",
         "unit": "kWh",
         "device_class": "energy",
-        "state_class": "total_increasing"
+        "state_class": "total_increasing",
+        "display_precision": 2
     },
     "month_generation": {
         "name": "Month Energy",
         "unit": "kWh",
         "device_class": "energy",
-        "state_class": "total_increasing"
+        "state_class": "total_increasing",
+        "display_precision": 2
     },
     "today_generation": {
         "name": "Today Energy",
         "unit": "kWh",
         "device_class": "energy",
-        "state_class": "total_increasing"
+        "state_class": "total_increasing",
+        "display_precision": 2
     },
     "year_generation": {
         "name": "Year Energy",
         "unit": "kWh",
         "device_class": "energy",
-        "state_class": "total_increasing"
+        "state_class": "total_increasing",
+        "display_precision": 2
     },
-    "tree": {"name": "Trees Planted", "unit": "trees", "icon": "mdi:tree", "state_class": "total_increasing"},
-    "co2": {"name": "CO2 Saved", "unit": "kg", "icon": "mdi:molecule-co2", "state_class": "total_increasing"},
-    "diesel": {"name": "Diesel Saved", "unit": "L", "icon": "mdi:barrel", "state_class": "total_increasing"},
-    "percent": {"name": "Capacity Factor", "unit": "%", "icon": "mdi:percent", "state_class": "measurement"},
-    "meter_power": {"name": "Meter Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
-    "power_load": {"name": "Power Load", "unit": "W", "device_class": "power", "state_class": "measurement"},
-    "w_cha": {"name": "Charging Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
-    "power_pv": {"name": "PV Power", "unit": "W", "device_class": "power", "state_class": "measurement"},
+    "tree": {"name": "Trees Planted", "icon": "mdi:tree", "state_class": "total_increasing", "display_precision": 2},
+    "co2": {"name": "CO2 Saved", "unit": "kg", "icon": "mdi:molecule-co2", "state_class": "total_increasing", "display_precision": 2},
+    "diesel": {"name": "Diesel Saved", "unit": "L", "icon": "mdi:barrel", "state_class": "total_increasing", "display_precision": 2},
+    "percent": {"name": "Capacity Factor", "unit": "%", "icon": "mdi:percent", "state_class": "measurement", "display_precision": 2},
+    "w_cha": {"name": "Charging Power", "unit": "W", "device_class": "power", "state_class": "measurement", "display_precision": 0},
+    "power_pv": {"name": "PV Power", "unit": "W", "device_class": "power", "state_class": "measurement", "display_precision": 0},
     "gateway_online": {"name": "Gateway Online", "icon": "mdi:cloud-check", "entity_category": "diagnostic"},
     "gateway_offline": {"name": "Gateway Offline", "icon": "mdi:cloud-off-outline", "entity_category": "diagnostic"},
     "inverter_online": {"name": "Inverter Online", "icon": "mdi:solar-power-variant", "entity_category": "diagnostic"},
@@ -111,6 +113,8 @@ def publish_discovery_message(
             payload["icon"] = attributes["icon"]
         if "entity_category" in attributes:
             payload["entity_category"] = attributes["entity_category"]
+        if "display_precision" in attributes:
+            payload["suggested_display_precision"] = attributes["display_precision"]
 
         # Publish with retain=True so HA finds it on restart
         client.publish(payload, topic=discovery_topic, retain=True)
