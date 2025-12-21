@@ -235,7 +235,32 @@ The daemon automatically publishes MQTT Discovery messages for configured sensor
 
 ### Published MQTT Data
 
-The daemon publishes a merged JSON containing data from multiple endpoints. Example payload for HMS800-C inverter:
+| Field | Description | Unit | Decimal Precision |
+|-------|-------------|------|-------------------|
+| `percent` | Capacity Factor | % | 2 |
+| `w_cha` | Charging Power | W | 0 |
+| `power_pv` | PV Power | W | 0 |
+| `today_generation` | Today Energy | kWh | 2 |
+| `month_generation` | Month Energy | kWh | 2 |
+| `year_generation` | Year Energy | kWh | 2 |
+| `total_generation` | Total Energy | kWh | 2 |
+| `co2` | CO2 Saved | kg | 2 |
+| `tree` | Trees Planted | - | 2 |
+| `diesel` | Diesel Saved | L | 2 |
+| `today_revenue` | Today Revenue | - | 2 |
+| `month_revenue` | Month Revenue | - | 2 |
+| `total_revenue` | Total Revenue | - | 2 |
+| `gateway_online` | Gateway Online | - | - |
+| `gateway_offline` | Gateway Offline | - | - |
+| `inverter_online` | Inverter Online | - | - |
+| `inverter_normal` | Inverter Normal | - | - |
+| `inverter_offline` | Inverter Offline | - | - |
+| `inverter_fault` | Inverter Fault | - | - |
+| `inverter_wait` | Inverter Wait | - | - |
+
+### Example Payload
+
+Example payload for HMS800-C inverter:
 
 ```json
 {
@@ -254,17 +279,13 @@ The daemon publishes a merged JSON containing data from multiple endpoints. Exam
   "today_revenue": 0,
   "month_revenue": 0.02,
   "total_revenue": 16.16,
-  "gateway": {
-    "online": 1,
-    "offline": 0
-  },
-  "inverter": {
-    "online": 1,
-    "normal": 1,
-    "offline": 0,
-    "fault": 0,
-    "wait": 0
-  }
+  "gateway_online": 1,
+  "gateway_offline": 0,
+  "inverter_online": 1,
+  "inverter_normal": 1,
+  "inverter_offline": 0,
+  "inverter_fault": 0,
+  "inverter_wait": 0
 }
 ```
 
