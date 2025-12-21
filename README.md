@@ -84,6 +84,7 @@ Configuration can be provided via **environment variables** or a **YAML config f
 | `MQTT_TOPIC` | No | `home/data` | MQTT topic to publish to |
 | `MQTT_USERNAME` | No | - | MQTT username (optional) |
 | `MQTT_PASSWORD` | No | - | MQTT password (optional) |
+| `MQTT_CLIENT_ID` | No | `hyponcloud2mqtt` | MQTT client ID (optional) |
 | `MQTT_AVAILABILITY_TOPIC` | No | `{MQTT_TOPIC}/status` | MQTT availability topic |
 | `HA_DISCOVERY_ENABLED` | No | `true` | Enable Home Assistant discovery |
 | `HA_DISCOVERY_PREFIX` | No | `homeassistant` | Home Assistant discovery prefix |
