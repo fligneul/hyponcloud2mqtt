@@ -20,7 +20,8 @@ class MqttClient:
             dry_run: bool = False,
             tls_enabled: bool = False,
             tls_insecure: bool = False,
-            ca_path: str | None = None):
+            ca_path: str | None = None,
+            client_id: str | None = None):
         self.broker = broker
         self.port = port
         self.topic = topic
@@ -29,7 +30,10 @@ class MqttClient:
         self.connected = False
         self._connection_event = threading.Event()
         self._connection_result = None
-        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        self.client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+            client_id=client_id
+        )
 
         if username and password:
             self.client.username_pw_set(username, password)
@@ -66,7 +70,22 @@ class MqttClient:
             logger.debug(f"Published 'online' to {self.availability_topic}")
         else:
             self.connected = False
-            logger.error(f"Failed to connect to MQTT broker, return code {rc}")
+            error_msg = f"Failed to connect to MQTT broker, reason: {rc}"
+
+            # Troubleshooting tips based on Paho ReasonCode (supports int and string)
+            # rc 5 is 'Not authorized' in MQTT v3.1.1, 135 in MQTT v5
+            rc_str = str(rc)
+            if rc_str == "Not authorized" or rc == 5 or rc == 135:
+                error_msg += "\n[TIP] 'Not authorized' typically means:"
+                error_msg += "\n      - Incorrect MQTT_USERNAME or MQTT_PASSWORD"
+                error_msg += "\n      - The user does not have permission to use the Client ID provided"
+                error_msg += "\n      - The user does not have permission to publish/subscribe to the topics"
+            elif rc_str == "Bad user name or password" or rc == 4 or rc == 134:
+                error_msg += "\n[TIP] 'Bad user name or password': Double-check MQTT_USERNAME and MQTT_PASSWORD."
+            elif rc_str == "Connection refused" or rc == 1 or rc == 128:
+                error_msg += "\n[TIP] 'Connection refused': Check MQTT_BROKER address, MQTT_PORT, and firewall settings."
+
+            logger.error(error_msg)
 
         # Signal connection attempt completed
         self._connection_result = rc

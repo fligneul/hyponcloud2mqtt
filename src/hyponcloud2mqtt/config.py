@@ -29,6 +29,7 @@ class Config:
     ha_discovery_prefix: str = "homeassistant"
     device_name: str = "hyponcloud2mqtt"
     health_server_enabled: bool = True
+    mqtt_client_id: str = "hyponcloud2mqtt"
 
     @classmethod
     def load(cls, config_path: str | None = None) -> "Config":  # noqa: C901
@@ -54,6 +55,7 @@ class Config:
             "ha_discovery_enabled": True,
             "ha_discovery_prefix": "homeassistant",
             "device_name": "hyponcloud2mqtt",
+            "mqtt_client_id": "hyponcloud2mqtt",
         }
 
         # Load from file if exists
@@ -117,6 +119,9 @@ class Config:
 
         if os.getenv("MQTT_PASSWORD"):
             config["mqtt_password"] = os.getenv("MQTT_PASSWORD")
+
+        if os.getenv("MQTT_CLIENT_ID"):
+            config["mqtt_client_id"] = os.getenv("MQTT_CLIENT_ID")
 
         mqtt_tls_enabled_env = os.getenv("MQTT_TLS_ENABLED")
         if mqtt_tls_enabled_env:
