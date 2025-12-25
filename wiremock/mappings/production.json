@@ -1,0 +1,29 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/plant/your_system_id_1/production2"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "data": {
+                "today_generation": 0.01,
+                "month_generation": 1.02,
+                "year_generation": 95.35,
+                "total_generation": 95.35,
+                "co2": 2.86,
+                "tree": 0.16,
+                "diesel": 10.59,
+                "today_revenue": 0,
+                "month_revenue": 0.17,
+                "total_revenue": 16.32
+            },
+            "message": "ok",
+            "time": 1765706367,
+            "code": 20000
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}
