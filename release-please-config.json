@@ -1,0 +1,18 @@
+{
+    "packages": {
+        ".": {
+            "release-type": "python",
+            "package-name": "hyponcloud2mqtt",
+            "changelog-path": "CHANGELOG.md",
+            "bump-minor-pre-major": true,
+            "bump-patch-for-minor-pre-major": true,
+            "extra-files": [
+                {
+                    "type": "json",
+                    "path": ".release-please-manifest.json",
+                    "jsonpath": "$['.']"
+                }
+            ]
+        }
+    }
+}

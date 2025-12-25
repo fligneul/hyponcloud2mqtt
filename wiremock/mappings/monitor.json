@@ -1,0 +1,42 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/plant/your_system_id_1/monitor",
+        "queryParameters": {
+            "refresh": {
+                "equalTo": "true"
+            }
+        }
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "data": {
+                "monetary": "",
+                "today_earning": 0,
+                "month_earning": 0,
+                "total_earning": 0,
+                "e_total": 95.35,
+                "e_month": 0.01,
+                "e_today": 0.01,
+                "e_year": 0,
+                "total_tree": 0.16,
+                "total_co2": 2.86,
+                "total_diesel": 10.59,
+                "percent": 2.5,
+                "meter_power": 0,
+                "power_load": 19,
+                "w_cha": 0,
+                "power_pv": 19,
+                "soc": 0,
+                "micro": 1
+            },
+            "message": "ok",
+            "time": 1765706367,
+            "code": 20000
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

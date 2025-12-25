@@ -1,60 +1,81 @@
-name: 🏗️ Build
+name: 🧪 Test
 
 on:
   push:
-
-permissions:
-  contents: read
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  build-wheel:
+  test:
+    name: 🧪 Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.12", "3.x"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: 🛒 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 🔌 Start Services (Mosquitto & Wiremock)
+        run: |
+          # Start Mosquitto
+          docker run -d --name mosquitto -p 1883:1883 \
+            -v "${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf" \
+            eclipse-mosquitto:2
+
+          # Start Wiremock
+          docker run -d --name wiremock -p 8080:8080 \
+            -v "${{ github.workspace }}/wiremock/mappings:/home/wiremock/mappings" \
+            wiremock/wiremock:latest
+
+      - name: ⏳ Wait for Services
+        run: |
+          echo "Waiting for Mosquitto..."
+          timeout 30 sh -c 'until nc -z 127.0.0.1 1883; do sleep 1; done'
+          echo "Mosquitto is up!"
+
+          echo "Waiting for WireMock..."
+          timeout 30 sh -c 'until curl -s http://127.0.0.1:8080/__admin/mappings; do sleep 1; done'
+          echo "WireMock is up!"
+
+      - name: 📄 Dump Docker Logs
+        if: always()
+        run: |
+          echo "=== Mosquitto Logs ==="
+          docker logs mosquitto || true
+          echo "=== WireMock Logs ==="
+          docker logs wiremock || true
+
       - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: 'x64'
 
       - name: 👷🏻 Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest
+          pip install ".[dev]"
 
-      - name: 🏗️ Build application wheel
-        run: python -m build
-
-  build-pytest:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.12", "3.x"]
-
-    steps:
-      - name: 🛒 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: 'x64'
-
-      - name: 👷🏻 Install dependencies
+      - name: 🕵🏻 Lint with flake8
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest
+          flake8 .
 
-      - name: 🕵🏻 Test with pytest
+      - name: 🕵🏻 Type check with mypy
         run: |
-          pytest --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
+          mypy src
+
+      - name: 🧪 Test with pytest
+        env:
+          HTTP_URL: "http://127.0.0.1:8080"
+          MQTT_BROKER: "127.0.0.1"
+          MQTT_PORT: "1883"
+          SYSTEM_IDS: "your_system_id_1"
+          API_USERNAME: "test_user"
+          API_PASSWORD: "test_password"
+        run: |
+          pytest -v -rs --junitxml=junit/test-results-${{ matrix.python-version }}.xml
 
       - name: 🚀 Upload pytest test results
         uses: actions/upload-artifact@v4
@@ -64,41 +85,11 @@ jobs:
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
 
-  build-pylint:
+  build:
+    name: 🐳 Build Docker
     runs-on: ubuntu-latest
     steps:
       - name: 🛒 Checkout repository
         uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python 3.x
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: 👷🏻 Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pylint pylint-exit
-
-      - name: 🕵🏻 Analyse code with pylint
-        run: |
-          pylint --init-hook="import sys; import os; sys.path.append(os.path.abspath('.'));" $(git ls-files '*.py') || pylint-exit $?
-
-  build-docker:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🛒 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
-
       - name: 🏗️ Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: ${{ vars.DOCKER_BUILD_PLATFORMS }}
-          push: false
-          tags: hyponcloud2mqtt:${{ github.sha }}
+        run: docker build .
