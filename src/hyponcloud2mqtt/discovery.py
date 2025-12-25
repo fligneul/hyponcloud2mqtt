@@ -212,6 +212,8 @@ def publish_discovery_message(
         if "display_precision" in attributes:
             payload["suggested_display_precision"] = attributes["display_precision"]
 
-        # Publish with retain=True so HA finds it on restart
-        client.publish(payload, topic=discovery_topic, retain=True)
+        # Publish discovery message
+        # We use retain=False for "No-Retain" strategy.
+        # Discovery will be re-published on Home Assistant birth message.
+        client.publish(payload, topic=discovery_topic, retain=False)
         logger.debug(f"Published discovery for {key} to {discovery_topic}")

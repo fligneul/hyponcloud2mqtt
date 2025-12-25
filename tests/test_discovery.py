@@ -109,6 +109,8 @@ def test_publish_discovery_message_contains_precision():
 
         if "today_generation" in (topic or ""):
             assert payload["suggested_display_precision"] == 2
+            # Verify retain is False for No-Retain strategy
+            assert call.kwargs.get('retain') is False
             found = True
             break
 

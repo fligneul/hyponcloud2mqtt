@@ -96,12 +96,33 @@ class Daemon:
         else:
             logger.info("[DRY RUN] Skipping MQTT connection")
 
+        # Helper to publish discovery
+        def publish_all_discovery():
+            logger.info("Publishing Home Assistant discovery messages...")
+            for sid in config.system_ids:
+                publish_discovery_message(mqtt_client, config, sid)
+
+        # Home Assistant status topic
+        ha_status_topic = f"{config.ha_discovery_prefix}/status"
+
+        # Message callback for HA status
+        def on_mqtt_message(client, userdata, msg):
+            if msg.topic == ha_status_topic:
+                payload = msg.payload.decode()
+                logger.info(f"Received Home Assistant status: {payload}")
+                if payload == "online":
+                    logger.info("Home Assistant is back online, re-publishing discovery...")
+                    publish_all_discovery()
+
+        mqtt_client.message_callback = on_mqtt_message
+
         # Publish HA Discovery (only if MQTT is connected)
         if config.ha_discovery_enabled:
             if mqtt_client.connected:
-                logger.info("Publishing Home Assistant discovery messages...")
-                for system_id in config.system_ids:
-                    publish_discovery_message(mqtt_client, config, system_id)
+                # Subscribe to HA status
+                mqtt_client.subscribe(ha_status_topic)
+                # Initial discovery publication
+                publish_all_discovery()
             else:
                 logger.warning(
                     "Skipping Home Assistant discovery: MQTT not connected")
@@ -126,6 +147,9 @@ class Daemon:
                 while self.running and not mqtt_client.connected:
                     if mqtt_client.connect(timeout=10):
                         logger.info("Reconnected to MQTT broker")
+                        if config.ha_discovery_enabled:
+                            mqtt_client.subscribe(ha_status_topic)
+                            publish_all_discovery()
                         break
                     else:
                         logger.warning(
