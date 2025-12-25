@@ -1,46 +1,45 @@
-# Hypon Cloud API configuration
-# Environment variable: HYPON_USER
-# Environment variable: HYPON_PASSWORD
-# Environment variable: HYPON_API_BASE_URL
-# Environment variable: HYPON_SYSTEM_IDS (comma-separated string)
-# Environment variable: HYPON_INTERVAL
-# Environment variable: HYPON_RETRIES
-hypon:
-  # Your Hypon Cloud username
-  user: "YOUR_USER"
-  # Your Hypon Cloud password
-  password: "YOUR_PASSWORD"
-  # Base URL for the Hypon Cloud API
-  api_base_url: "https://api.hypon.cloud/v2"
-  # List of system IDs to fetch data for (e.g., ["YOUR_SYSTEM_ID_1", "YOUR_SYSTEM_ID_2"])
-  system_ids:
-    - "YOUR_SYSTEM_ID"
-  # Interval in seconds between data fetches from Hypon Cloud (default: 60)
-  interval: 60
-  # Number of retries to attempt if fetching data fails (default: 0)
-  retries: 0
+# hyponcloud2mqtt Configuration Example
+# Copy this file to config.yaml and customize for your setup
 
-# MQTT broker configuration
-# Environment variable: MQTT_HOST
-# Environment variable: MQTT_PORT
-# Environment variable: MQTT_USER
-# Environment variable: MQTT_PASSWORD
-# Environment variable: MQTT_TOPIC
-# Environment variable: MQTT_RETAIN
-# Environment variable: MQTT_SSL
-mqtt:
-  # MQTT broker hostname or IP address
-  host: "localhost"
-  # MQTT broker port (default: 1883)
-  port: 1883
-  # MQTT username (optional)
-  user: ""
-  # MQTT password (optional)
-  password: ""
-  # Base MQTT topic for publishing data (e.g., "hyponcloud2mqtt/status")
-  topic: "hyponcloud2mqtt"
-  # Set to true to have messages retained by the broker (default: false)
-  retain: false
-  # Set to true to enable SSL/TLS encryption (default: false)
-  ssl: false
-  
+# Base URL of your API (required)
+http_url: "http://192.168.1.100"
+
+# System IDs for plant-specific endpoints (required)
+# Used to construct URLs like: <base_url>/plant/<system_id>/<endpoint>
+system_ids:
+  - "your_system_id_1"
+  - "your_system_id_2"
+
+# API credentials (required for authentication)
+api_username: "your_username"
+api_password: "your_password"
+
+# SSL certificate verification (default: true)
+# Set to false only if using self-signed certificates
+verify_ssl: true
+
+# Dry Run Mode (default: false)
+# If true, MQTT messages will be logged but not published
+dry_run: false
+
+# Fetch interval in seconds (default: 60)
+http_interval: 60
+
+# MQTT Broker configuration
+mqtt_broker: "localhost"
+mqtt_port: 1883
+mqtt_topic: "solar/inverter"
+mqtt_username: null  # Optional
+mqtt_password: null  # Optional
+mqtt_client_id: "hyponcloud2mqtt"  # Optional, defaults to hyponcloud2mqtt
+
+# TLS/SSL Configuration (optional)
+# mqtt_tls_enabled: false
+# mqtt_tls_insecure: false # Set to true to allow self-signed certificates
+# mqtt_ca_path: "/path/to/ca.crt" # Path to CA certificate file (if not using system CAs)
+
+# Home Assistant Discovery (optional)
+# ha_discovery_enabled: false
+ha_discovery_prefix: "homeassistant"
+# Device name for Home Assistant (default: hyponcloud2mqtt)
+device_name: "Solar Inverter"

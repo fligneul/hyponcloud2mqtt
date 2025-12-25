@@ -1,0 +1,54 @@
+services:
+  hyponcloud2mqtt:
+    build: .
+    container_name: hyponcloud2mqtt-dev
+    restart: unless-stopped
+    environment:
+      # Point to WireMock
+      HTTP_URL: "http://wiremock:8080"
+      SYSTEM_IDS: "your_system_id_1,your_system_id_2"
+      API_USERNAME: "test_user"
+      API_PASSWORD: "test_password"
+      HTTP_INTERVAL: "10" # Faster interval for testing
+
+      # MQTT Configuration
+      MQTT_BROKER: "mosquitto"
+      MQTT_PORT: "1883"
+      MQTT_TOPIC: "home/dev/data"
+
+      # Logging
+      PYTHONUNBUFFERED: "1"
+      LOG_LEVEL: "DEBUG"
+      TZ: "Europe/Paris"
+
+    depends_on:
+      mosquitto:
+        condition: service_started
+      wiremock:
+        condition: service_healthy
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto-dev
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    # Create a simple config allowing anonymous access for dev
+    command: >
+      sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf &&
+             echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf &&
+             /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"
+
+  wiremock:
+    image: wiremock/wiremock:latest
+    container_name: wiremock
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/__admin" ]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 2s

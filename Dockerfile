@@ -1,18 +1,40 @@
-FROM python:3.12-slim AS builder
-
-RUN apt-get update && apt-get install -y --no-install-recommends binutils
-
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt pyinstaller --no-warn-script-location
-
-COPY src/hyponcloud2mqtt/ /app/hyponcloud2mqtt
-WORKDIR /app
-RUN /root/.local/bin/pyinstaller --collect-all tzdata --onefile /app/hyponcloud2mqtt/__main__.py -n hyponcloud2mqtt
-
-FROM ubuntu:noble AS runner
-RUN apt update && apt install tzdata -y && apt clean && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/dist/hyponcloud2mqtt /app/
+# Stage 1: Builder
+FROM python:3.11-slim-bookworm AS builder
 
 WORKDIR /app
-CMD ["./hyponcloud2mqtt"]
+
+# Copy files required to install dependencies
+COPY pyproject.toml .
+
+# Copy source code
+COPY src/ src/
+
+# Install the package and its dependencies into a target directory
+RUN pip install --prefix=/install .
+
+
+# Stage 2: Runtime
+FROM python:3.11-slim-bookworm
+
+RUN apt-get update && apt-get install -y tzdata && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy the installed application from the builder stage
+COPY --from=builder /install /usr/local
+COPY docker/healthcheck.py .
+
+# The healthcheck needs to be executable
+RUN chmod +x healthcheck.py
+
+# Create a non-root user and switch to it
+RUN useradd --create-home appuser
+USER appuser
+
+# Set the PYTHONPATH to include the site-packages directory
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python3 healthcheck.py
+
+CMD ["hyponcloud2mqtt"]

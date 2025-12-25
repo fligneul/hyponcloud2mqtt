@@ -1,0 +1,49 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/plant/your_system_id_2/status"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+            "data": {
+                "gateway": {
+                    "online": 0,
+                    "offline": 1
+                },
+                "inverter": {
+                    "online": 0,
+                    "normal": 0,
+                    "offline": 1,
+                    "fault": 0,
+                    "wait": 0
+                },
+                "battery": {
+                    "count": 1,
+                    "sleep": 1,
+                    "charge": 0,
+                    "discharge": 0,
+                    "idle": 0,
+                    "standby": 0,
+                    "run": 0,
+                    "fault": 0,
+                    "offline": 0
+                },
+                "meter": 1,
+                "ev": 0,
+                "him_gateway": {
+                    "online": 0,
+                    "offline": 0
+                },
+                "him": 0,
+                "event": 1
+            },
+            "message": "ok",
+            "time": 1765707000,
+            "code": 20000
+        },
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}

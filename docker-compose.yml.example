@@ -1,0 +1,70 @@
+services:
+  hyponcloud2mqtt:
+    image: fligneul/hyponcloud2mqtt:latest
+    # Or build locally:
+    # build: .
+    container_name: hyponcloud2mqtt
+    restart: unless-stopped
+    environment:
+      # API Configuration
+      HTTP_URL: "http://192.168.1.100"
+      SYSTEM_IDS: "your_system_id_1,your_system_id_2"
+      API_USERNAME: "your_username"
+      API_PASSWORD: "your_password"
+      HTTP_INTERVAL: "60"
+      # LOG_LEVEL: "INFO"   # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+      # TZ: "Europe/Paris"  # Container timezone
+      # VERIFY_SSL: "true"  # Set to false for self-signed certificates
+      # DRY_RUN: "false"    # Set to true to log MQTT messages instead of publishing
+      
+      # MQTT Configuration
+      MQTT_BROKER: "mosquitto"
+      MQTT_PORT: "1883"
+      MQTT_TOPIC: "solar/inverter"
+      # MQTT_USERNAME: "mqtt_user"
+      # MQTT_PASSWORD: "mqtt_pass"
+      
+      # Home Assistant Discovery
+      HA_DISCOVERY_PREFIX: "homeassistant"
+      DEVICE_NAME: "Solar Inverter"
+    
+    # Or use config file instead of environment variables:
+    # volumes:
+    #   - ./config.yaml:/app/config.yaml:ro
+    # environment:
+    #   CONFIG_FILE: /app/config.yaml
+    
+    depends_on:
+      - mosquitto
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+# Optional: Add Home Assistant if not running separately
+#  homeassistant:
+#    image: homeassistant/home-assistant:latest
+#    container_name: homeassistant
+#    restart: unless-stopped
+#    ports:
+#      - "8123:8123"
+#    volumes:
+#      - ./homeassistant:/config
+#    environment:
+#      - TZ=Europe/Paris
