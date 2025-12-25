@@ -61,3 +61,32 @@ def test_merge_api_data_with_none():
     # Test with some endpoints returning None
     merged = merge_api_data(None, None, None)
     assert merged == {}
+
+
+def test_repro_strings_in_output():
+    status_data = {
+        "data": {
+            "gateway": {
+                "online": 1,
+                "offline": "0",
+            },
+            "inverter": {
+                "online": 1,
+                "normal": "1",
+                "offline": 0,
+                "fault": "",      # Should be removed
+                "wait": None      # Should be removed
+            }
+        }
+    }
+    merged = merge_api_data(None, None, status_data)
+
+    # Assert they are integers
+    assert isinstance(merged["gateway_online"], int)
+    assert merged["gateway_online"] == 1
+    assert isinstance(merged["inverter_normal"], int)
+    assert merged["inverter_normal"] == 1
+
+    # Assert invalid/None values are removed
+    assert "inverter_fault" not in merged
+    assert "inverter_wait" not in merged

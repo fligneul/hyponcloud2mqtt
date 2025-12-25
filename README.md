@@ -250,13 +250,13 @@ The daemon automatically publishes MQTT Discovery messages for configured sensor
 | `today_revenue` | Today Revenue | - | 2 |
 | `month_revenue` | Month Revenue | - | 2 |
 | `total_revenue` | Total Revenue | - | 2 |
-| `gateway_online` | Gateway Online | - | - |
-| `gateway_offline` | Gateway Offline | - | - |
-| `inverter_online` | Inverter Online | - | - |
-| `inverter_normal` | Inverter Normal | - | - |
-| `inverter_offline` | Inverter Offline | - | - |
-| `inverter_fault` | Inverter Fault | - | - |
-| `inverter_wait` | Inverter Wait | - | - |
+| `gateway_online` | Gateway Online | - | 0 |
+| `gateway_offline` | Gateway Offline | - | 0 |
+| `inverter_online` | Inverter Online | - | 0 |
+| `inverter_normal` | Inverter Normal | - | 0 |
+| `inverter_offline` | Inverter Offline | - | 0 |
+| `inverter_fault` | Inverter Fault | - | 0 |
+| `inverter_wait` | Inverter Wait | - | 0 |
 
 ### Example Payload
 

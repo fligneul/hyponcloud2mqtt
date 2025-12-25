@@ -25,18 +25,21 @@ SENSORS: dict[str, SensorAttribute] = {
     "today_revenue": {
         "name": "Today Revenue",
         "icon": "mdi:currency-usd",
+        "device_class": "monetary",
         "state_class": "total_increasing",
         "display_precision": 2
     },
     "month_revenue": {
         "name": "Month Revenue",
         "icon": "mdi:currency-usd",
+        "device_class": "monetary",
         "state_class": "total_increasing",
         "display_precision": 2
     },
     "total_revenue": {
         "name": "Total Revenue",
         "icon": "mdi:currency-usd",
+        "device_class": "monetary",
         "state_class": "total_increasing",
         "display_precision": 2
     },
@@ -112,37 +115,44 @@ SENSORS: dict[str, SensorAttribute] = {
     "gateway_online": {
         "name": "Gateway Online",
         "icon": "mdi:cloud-check",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement",
     },
     "gateway_offline": {
         "name": "Gateway Offline",
         "icon": "mdi:cloud-off-outline",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
     "inverter_online": {
         "name": "Inverter Online",
         "icon": "mdi:solar-power-variant",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
     "inverter_normal": {
         "name": "Inverter Normal",
         "icon": "mdi:check-circle-outline",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
     "inverter_offline": {
         "name": "Inverter Offline",
         "icon": "mdi:solar-power-variant-outline",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
     "inverter_fault": {
         "name": "Inverter Fault",
         "icon": "mdi:alert-circle-outline",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
     "inverter_wait": {
         "name": "Inverter Wait",
         "icon": "mdi:clock-outline",
-        "entity_category": "diagnostic"
+        "entity_category": "diagnostic",
+        "state_class": "measurement"
     },
 }
 
