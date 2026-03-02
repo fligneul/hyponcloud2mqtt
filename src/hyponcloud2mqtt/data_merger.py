@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -25,10 +26,7 @@ def _to_float(val: Any) -> float | None:
         return None
 
 
-def merge_api_data(
-        monitor: dict | None,
-        production: dict | None,
-        status: dict | None) -> dict:
+def merge_api_data(monitor: dict | None, production: dict | None, status: dict | None) -> dict:
     """
     Merge data from the 3 API endpoints into a single dict.
 

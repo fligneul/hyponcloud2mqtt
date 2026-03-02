@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import logging
 import os
@@ -48,7 +49,7 @@ def test_daemon_fetches_and_publishes_data(test_config):
 
     def on_message(client, userdata, msg):
         payload = msg.payload.decode()
-        logger.info(f"Received message on {msg.topic}")
+        logger.info("Received message on %s", msg.topic)
 
         if msg.topic == data_topic:
             received_messages.append({"type": "data", "payload": json.loads(payload)})
@@ -77,11 +78,9 @@ def test_daemon_fetches_and_publishes_data(test_config):
         pytest.skip(f"MQTT broker not running on {test_config.mqtt_broker}:{test_config.mqtt_port}: {e}")
 
     # Subscribe to data topic, discovery topics, and availability topic
-    mqtt_client.subscribe([
-        (data_topic, 0),
-        (f"{test_config.ha_discovery_prefix}/#", 0),
-        (test_config.mqtt_availability_topic, 0)
-    ])
+    mqtt_client.subscribe(
+        [(data_topic, 0), (f"{test_config.ha_discovery_prefix}/#", 0), (test_config.mqtt_availability_topic, 0)]
+    )
 
     # Start the MQTT client loop in a separate thread
     mqtt_client.loop_start()

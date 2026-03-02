@@ -15,7 +15,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "requests",
+    "httpx",
     "paho-mqtt",
     "pyyaml",
 ]
@@ -23,10 +23,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "responses",
-    "flake8",
+    "pytest-httpx",
+    "ruff",
     "mypy",
-    "types-requests",
     "types-PyYAML",
 ]
 
@@ -46,3 +45,11 @@ where = ["src"]
 [tool.setuptools_scm]
 write_to = "src/hyponcloud2mqtt/_version.py"
 fallback_version = "0.0.1.dev0"
+
+[tool.ruff]
+line-length = 127
+target-version = "py311"
+exclude = ["src/hyponcloud2mqtt/_version.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "G"]

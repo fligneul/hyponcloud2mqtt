@@ -1,6 +1,6 @@
 import http.server
-import socketserver
 import logging
+import socketserver
 
 logger = logging.getLogger(__name__)
 
@@ -12,20 +12,19 @@ class HealthContext:
 
 class HealthHTTPHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/health':
+        if self.path == "/health":
             is_healthy = self.server.context.mqtt_client.connected or self.server.context.mqtt_client.dry_run
 
             if is_healthy:
                 self.send_response(200)
-                self.send_header('Content-type', 'application/json')
+                self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(b'{"status": "healthy"}')
             else:
                 self.send_response(503)
-                self.send_header('Content-type', 'application/json')
+                self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(
-                    b'{"status": "unhealthy", "reason": "mqtt_disconnected"}')
+                self.wfile.write(b'{"status": "unhealthy", "reason": "mqtt_disconnected"}')
         else:
             self.send_response(404)
             self.end_headers()

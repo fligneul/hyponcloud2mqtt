@@ -1,5 +1,0 @@
-include README.md
-include LICENSE
-include config.yaml.example
-include .env.example
-include docker-compose.yml.example

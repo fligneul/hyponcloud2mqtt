@@ -1,27 +1,30 @@
 from __future__ import annotations
+
 import json
 import logging
 import threading
-import paho.mqtt.client as mqtt
 from typing import Any
+
+import paho.mqtt.client as mqtt
 
 logger = logging.getLogger(__name__)
 
 
 class MqttClient:
     def __init__(
-            self,
-            broker: str,
-            port: int,
-            topic: str,
-            availability_topic: str,
-            username: str | None = None,
-            password: str | None = None,
-            dry_run: bool = False,
-            tls_enabled: bool = False,
-            tls_insecure: bool = False,
-            ca_path: str | None = None,
-            client_id: str | None = None):
+        self,
+        broker: str,
+        port: int,
+        topic: str,
+        availability_topic: str,
+        username: str | None = None,
+        password: str | None = None,
+        dry_run: bool = False,
+        tls_enabled: bool = False,
+        tls_insecure: bool = False,
+        ca_path: str | None = None,
+        client_id: str | None = None,
+    ):
         self.broker = broker
         self.port = port
         self.topic = topic
@@ -30,15 +33,11 @@ class MqttClient:
         self.connected = False
         self._connection_event = threading.Event()
         self._connection_result = None
-        self.client = mqtt.Client(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-            client_id=client_id
-        )
+        self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
 
         if username and password:
             self.client.username_pw_set(username, password)
-            logger.debug(
-                f"MQTT authentication configured for user: {username}")
+            logger.debug("MQTT authentication configured for user: %s", username)
 
         if tls_enabled:
             # Enable TLS
@@ -48,24 +47,22 @@ class MqttClient:
             if tls_insecure:
                 self.client.tls_insecure_set(True)
 
-            logger.debug(f"MQTT TLS enabled (insecure: {tls_insecure})")
+            logger.debug("MQTT TLS enabled (insecure: %s)", tls_insecure)
 
         # Set LWT
         self.client.will_set(self.availability_topic, "offline", retain=True)
-        logger.debug(
-            f"MQTT Last Will and Testament set to {availability_topic}")
+        logger.debug("MQTT Last Will and Testament set to %s", availability_topic)
 
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
 
     def _on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
-            logger.info(
-                f"Connected to MQTT broker at {self.broker}:{self.port}")
+            logger.info("Connected to MQTT broker at %s:%s", self.broker, self.port)
             self.connected = True
             # Publish online status
             self.client.publish(self.availability_topic, "online", retain=True)
-            logger.debug(f"Published 'online' to {self.availability_topic}")
+            logger.debug("Published 'online' to %s", self.availability_topic)
         else:
             self.connected = False
             error_msg = f"Failed to connect to MQTT broker, reason: {rc}"
@@ -103,8 +100,7 @@ class MqttClient:
         Returns:
             True if connected successfully, False otherwise
         """
-        logger.info(
-            f"Connecting to MQTT broker at {self.broker}:{self.port}...")
+        logger.info("Connecting to MQTT broker at %s:%s...", self.broker, self.port)
 
         # Reset connection event
         self._connection_event.clear()
@@ -115,7 +111,7 @@ class MqttClient:
             self.client.loop_start()
             logger.debug("MQTT client loop started")
         except Exception as e:
-            logger.error(f"Error connecting to MQTT broker: {e}")
+            logger.error("Error connecting to MQTT broker: %s", e)
             return False
 
         # Wait for connection callback
@@ -124,26 +120,23 @@ class MqttClient:
             if self._connection_result == 0:
                 return True
             else:
-                logger.error(
-                    f"MQTT connection failed with code {self._connection_result}")
+                logger.error("MQTT connection failed with code %s", self._connection_result)
                 return False
         else:
-            logger.error(f"MQTT connection timeout after {timeout} seconds")
+            logger.error("MQTT connection timeout after %s seconds", timeout)
             return False
 
     def disconnect(self):
         if not self.dry_run and self.connected:
             try:
-                logger.debug(
-                    f"Publishing 'offline' to {self.availability_topic}")
-                info = self.client.publish(
-                    self.availability_topic, "offline", retain=True)
+                logger.debug("Publishing 'offline' to %s", self.availability_topic)
+                info = self.client.publish(self.availability_topic, "offline", retain=True)
                 # Wait for the message to be published (with timeout to not
                 # block shutdown)
                 info.wait_for_publish(timeout=2.0)
                 logger.debug("Offline status published successfully")
             except Exception as e:
-                logger.warning(f"Failed to publish offline status: {e}")
+                logger.warning("Failed to publish offline status: %s", e)
 
         logger.info("Disconnecting from MQTT broker...")
         self.client.loop_stop()
@@ -156,17 +149,14 @@ class MqttClient:
 
         if self.dry_run:
             payload = json.dumps(data, indent=2)
-            logger.info(
-                f"[DRY RUN] Would publish to {publish_topic} (retain={retain}):\n{payload}")
+            logger.info("[DRY RUN] Would publish to %s (retain=%s):\n%s", publish_topic, retain, payload)
             return
 
         try:
             payload = json.dumps(data)
-            logger.debug(
-                f"Publishing {len(payload)} bytes to {publish_topic}, retain={retain}")
+            logger.debug("Publishing %s bytes to %s, retain=%s", len(payload), publish_topic, retain)
             info = self.client.publish(publish_topic, payload, retain=retain)
             info.wait_for_publish()
-            logger.debug(
-                f"Data published successfully to {publish_topic}")
+            logger.debug("Data published successfully to %s", publish_topic)
         except Exception as e:
-            logger.error(f"Error publishing to MQTT: {e}")
+            logger.error("Error publishing to MQTT: %s", e)
