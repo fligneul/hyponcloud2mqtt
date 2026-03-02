@@ -1,4 +1,5 @@
 import pytest
+
 from hyponcloud2mqtt.config import Config
 
 

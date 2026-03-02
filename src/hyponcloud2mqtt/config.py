@@ -1,8 +1,10 @@
 from __future__ import annotations
-import os
+
+import contextlib
 import logging
+import os
 from dataclasses import dataclass
-from typing import List, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Config:
     http_url: str
-    system_ids: List[str]
+    system_ids: list[str]
     http_interval: int
     mqtt_broker: str
     mqtt_port: int
@@ -32,7 +34,7 @@ class Config:
     mqtt_client_id: str = "hyponcloud2mqtt"
 
     @classmethod
-    def load(cls, config_path: str | None = None) -> "Config":  # noqa: C901
+    def load(cls, config_path: str | None = None) -> Config:  # noqa: C901
         # Defaults
         config: dict[str, Any] = {
             "http_url": "https://127.0.0.1:8080",
@@ -61,20 +63,19 @@ class Config:
         # Load from file if exists
         if config_path and os.path.exists(config_path):
             import yaml
+
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     file_config = yaml.safe_load(f)
                     if file_config:
                         config.update(file_config)
             except Exception as e:
-                logger.warning(f"Error loading config file {config_path}: {e}")
+                logger.warning("Error loading config file %s: %s", config_path, e)
         else:
             if config_path:
-                logger.info(
-                    f"Config file {config_path} not found, using defaults")
+                logger.info("Config file %s not found, using defaults", config_path)
             else:
-                logger.info(
-                    "No config file specified, using defaults and environment variables")
+                logger.info("No config file specified, using defaults and environment variables")
 
         # Override with Env Vars (Env > File > Defaults)
         if os.getenv("HTTP_URL"):
@@ -83,25 +84,20 @@ class Config:
         # Env Var for system_ids (comma-separated)
         system_ids_env = os.getenv("SYSTEM_IDS")
         if system_ids_env:
-            config["system_ids"] = [s.strip()
-                                    for s in system_ids_env.split(',') if s.strip()]
+            config["system_ids"] = [s.strip() for s in system_ids_env.split(",") if s.strip()]
 
         http_interval_env = os.getenv("HTTP_INTERVAL")
         if http_interval_env:
-            try:
+            with contextlib.suppress(ValueError):
                 config["http_interval"] = int(http_interval_env)
-            except ValueError:
-                pass
 
         if os.getenv("MQTT_BROKER"):
             config["mqtt_broker"] = os.getenv("MQTT_BROKER")
 
         mqtt_port_env = os.getenv("MQTT_PORT")
         if mqtt_port_env:
-            try:
+            with contextlib.suppress(ValueError):
                 config["mqtt_port"] = int(mqtt_port_env)
-            except ValueError:
-                pass
 
         if os.getenv("MQTT_TOPIC"):
             config["mqtt_topic"] = os.getenv("MQTT_TOPIC")
@@ -161,13 +157,10 @@ class Config:
         # Validate configuration
         cls._validate_config(config)
 
-        logger.info(
-            f"Configuration loaded: {config['http_url']} -> {config['mqtt_topic']}")
-        logger.info(
-            f"SSL verification: {'enabled' if config['verify_ssl'] else 'disabled'}")
-        if config['dry_run']:
-            logger.warning(
-                "DRY RUN MODE: MQTT publishing disabled (logging only)")
+        logger.info("Configuration loaded: %s -> %s", config["http_url"], config["mqtt_topic"])
+        logger.info("SSL verification: %s", "enabled" if config["verify_ssl"] else "disabled")
+        if config["dry_run"]:
+            logger.warning("DRY RUN MODE: MQTT publishing disabled (logging only)")
 
         return cls(**config)
 
@@ -179,8 +172,7 @@ class Config:
         if not http_url:
             raise ValueError("http_url is required")
         if not http_url.startswith(("http://", "https://")):
-            raise ValueError(
-                f"http_url must start with http:// or https://, got: {http_url}")
+            raise ValueError(f"http_url must start with http:// or https://, got: {http_url}")  # noqa: G004
 
         # Validate system_ids
         system_ids = config.get("system_ids", [])
@@ -194,41 +186,33 @@ class Config:
         # Validate HTTP interval
         http_interval = config.get("http_interval", 0)
         if http_interval <= 0:
-            raise ValueError(
-                f"http_interval must be positive, got: {http_interval}")
+            raise ValueError(f"http_interval must be positive, got: {http_interval}")  # noqa: G004
         if http_interval > 86400:  # 24 hours
-            logger.warning(
-                f"http_interval is very large ({http_interval}s), consider reducing it")
+            logger.warning("http_interval is very large (%ss), consider reducing it", http_interval)
 
         # Validate MQTT port
         mqtt_port = config.get("mqtt_port", 0)
         if not (1 <= mqtt_port <= 65535):
-            raise ValueError(
-                f"mqtt_port must be between 1 and 65535, got: {mqtt_port}")
+            raise ValueError(f"mqtt_port must be between 1 and 65535, got: {mqtt_port}")  # noqa: G004
 
         # Validate MQTT topic
         mqtt_topic = config.get("mqtt_topic", "")
         if not mqtt_topic:
             raise ValueError("mqtt_topic is required")
         if mqtt_topic.startswith("$"):
-            raise ValueError(
-                "mqtt_topic cannot start with $ (reserved for MQTT system topics)")
+            raise ValueError("mqtt_topic cannot start with $ (reserved for MQTT system topics)")
 
         # Security warnings
         if not config.get("verify_ssl"):
-            logger.warning(
-                "SSL verification is DISABLED - this is insecure and should only be used for testing")
+            logger.warning("SSL verification is DISABLED - this is insecure and should only be used for testing")
 
         if config.get("mqtt_tls_insecure"):
-            logger.warning(
-                "MQTT TLS verification is DISABLED - this is insecure and should only be used for testing")
+            logger.warning("MQTT TLS verification is DISABLED - this is insecure and should only be used for testing")
 
         # Validate MQTT credentials consistency
         mqtt_username = config.get("mqtt_username")
         mqtt_password = config.get("mqtt_password")
         if mqtt_username and not mqtt_password:
-            logger.warning(
-                "MQTT username provided without password - authentication may fail")
+            logger.warning("MQTT username provided without password - authentication may fail")
         if mqtt_password and not mqtt_username:
-            logger.warning(
-                "MQTT password provided without username - authentication may fail")
+            logger.warning("MQTT password provided without username - authentication may fail")

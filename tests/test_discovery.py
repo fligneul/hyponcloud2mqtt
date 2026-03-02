@@ -1,18 +1,18 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from hyponcloud2mqtt.config import Config
-from hyponcloud2mqtt.main import Daemon
 from hyponcloud2mqtt.discovery import publish_discovery_message
+from hyponcloud2mqtt.main import Daemon
 
 
-@patch('hyponcloud2mqtt.main.MqttClient')
-@patch('hyponcloud2mqtt.main.DataFetcher')
-@patch('hyponcloud2mqtt.main.HealthServer')
-@patch('hyponcloud2mqtt.main.Config.load')
-@patch('hyponcloud2mqtt.main.publish_discovery_message')
-def test_discovery_disabled(
-        mock_publish_discovery,
-        mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
+@patch("hyponcloud2mqtt.daemon.MqttClient")
+@patch("hyponcloud2mqtt.daemon.DataFetcher")
+@patch("hyponcloud2mqtt.daemon.HealthServer")
+@patch("hyponcloud2mqtt.daemon.Config.load")
+@patch("hyponcloud2mqtt.daemon.publish_discovery_message")
+def test_discovery_disabled(mock_publish_discovery, mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that no discovery messages are published when discovery is disabled."""
     # Arrange
     config = Config(
@@ -23,7 +23,7 @@ def test_discovery_disabled(
         mqtt_port=1883,
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
-        ha_discovery_enabled=False
+        ha_discovery_enabled=False,
     )
     mock_config_load.return_value = config
     mock_mqtt_instance = mock_mqtt_client.return_value
@@ -42,14 +42,12 @@ def test_discovery_disabled(
     mock_publish_discovery.assert_not_called()
 
 
-@patch('hyponcloud2mqtt.main.MqttClient')
-@patch('hyponcloud2mqtt.main.DataFetcher')
-@patch('hyponcloud2mqtt.main.HealthServer')
-@patch('hyponcloud2mqtt.main.Config.load')
-@patch('hyponcloud2mqtt.main.publish_discovery_message')
-def test_discovery_enabled(
-        mock_publish_discovery,
-        mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
+@patch("hyponcloud2mqtt.daemon.MqttClient")
+@patch("hyponcloud2mqtt.daemon.DataFetcher")
+@patch("hyponcloud2mqtt.daemon.HealthServer")
+@patch("hyponcloud2mqtt.daemon.Config.load")
+@patch("hyponcloud2mqtt.daemon.publish_discovery_message")
+def test_discovery_enabled(mock_publish_discovery, mock_config_load, mock_health_server, mock_data_fetcher, mock_mqtt_client):
     """Test that discovery messages are published when discovery is enabled."""
     # Arrange
     config = Config(
@@ -61,7 +59,7 @@ def test_discovery_enabled(
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=True,
-        dry_run=False
+        dry_run=False,
     )
     mock_config_load.return_value = config
     mock_mqtt_instance = mock_mqtt_client.return_value
@@ -93,7 +91,7 @@ def test_publish_discovery_message_contains_precision():
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=True,
-        ha_discovery_prefix="homeassistant"
+        ha_discovery_prefix="homeassistant",
     )
     system_id = "12345"
 
@@ -104,8 +102,8 @@ def test_publish_discovery_message_contains_precision():
     # Check at least one numeric sensor (e.g., today_generation)
     found = False
     for call in client.publish.call_args_list:
-        payload = call.args[0] if call.args else call.kwargs.get('payload')
-        topic = call.kwargs.get('topic') or (call.args[1] if len(call.args) > 1 else None)
+        payload = call.args[0] if call.args else call.kwargs.get("payload")
+        topic = call.kwargs.get("topic") or (call.args[1] if len(call.args) > 1 else None)
 
         if "today_generation" in (topic or ""):
             assert payload["suggested_display_precision"] == 2
@@ -127,7 +125,7 @@ def test_publish_discovery_message_no_precision_for_diagnostic():
         mqtt_topic="hypon",
         mqtt_availability_topic="hypon/status",
         ha_discovery_enabled=True,
-        ha_discovery_prefix="homeassistant"
+        ha_discovery_prefix="homeassistant",
     )
     system_id = "12345"
 
@@ -139,7 +137,7 @@ def test_publish_discovery_message_no_precision_for_diagnostic():
     found = False
     for call in client.publish.call_args_list:
         payload = call.args[0]
-        topic = call.kwargs.get('topic')
+        topic = call.kwargs.get("topic")
 
         if "gateway_online" in topic:
             assert "suggested_display_precision" not in payload

@@ -1,18 +1,10 @@
 from __future__ import annotations
+
 from hyponcloud2mqtt.data_merger import merge_api_data
 
 
 def test_merge_api_data():
-    monitor = {
-        "code": 20000,
-        "data": {
-            "percent": 5.39,
-            "meter_power": 0,
-            "power_load": 41,
-            "w_cha": 0,
-            "power_pv": 41
-        }
-    }
+    monitor = {"code": 20000, "data": {"percent": 5.39, "meter_power": 0, "power_load": 41, "w_cha": 0, "power_pv": 41}}
 
     production = {
         "code": 20000,
@@ -26,25 +18,16 @@ def test_merge_api_data():
             "diesel": 10.49,
             "today_revenue": 0,
             "month_revenue": 0.02,
-            "total_revenue": 16.16
-        }
+            "total_revenue": 16.16,
+        },
     }
 
     status = {
         "code": 20000,
         "data": {
-            "gateway": {
-                "online": 1,
-                "offline": 0
-            },
-            "inverter": {
-                "online": 1,
-                "normal": 1,
-                "offline": 0,
-                "fault": 0,
-                "wait": 0
-            }
-        }
+            "gateway": {"online": 1, "offline": 0},
+            "inverter": {"online": 1, "normal": 1, "offline": 0, "fault": 0, "wait": 0},
+        },
     }
 
     merged = merge_api_data(monitor, production, status)
@@ -74,9 +57,9 @@ def test_repro_strings_in_output():
                 "online": 1,
                 "normal": "1",
                 "offline": 0,
-                "fault": "",      # Should be removed
-                "wait": None      # Should be removed
-            }
+                "fault": "",  # Should be removed
+                "wait": None,  # Should be removed
+            },
         }
     }
     merged = merge_api_data(None, None, status_data)

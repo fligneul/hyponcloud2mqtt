@@ -58,9 +58,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install ".[dev]"
 
-      - name: 🕵🏻 Lint with flake8
+      - name: 🕵🏻 Lint with Ruff
         run: |
-          flake8 .
+          ruff check .
+          ruff format --check .
 
       - name: 🕵🏻 Type check with mypy
         run: |
